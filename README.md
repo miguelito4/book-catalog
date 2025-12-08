@@ -127,7 +127,7 @@ npm run rebuild
 1. Connect your GitHub repo to Netlify
 2. Build command: `npm run rebuild`
 3. Publish directory: `site/_site`
-4. Add custom domain: `books.caseyjr.org`
+4. Add custom domain: `YOUR DOMAIN`
 
 ### Manual Deploy
 
