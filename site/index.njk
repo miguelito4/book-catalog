@@ -1,0 +1,145 @@
+---
+layout: base.njk
+title: Browse
+---
+
+<div class="page-header">
+  <h1>A Life in Books</h1>
+  <p class="page-intro">A running catalogue of books that I've read and remember over the years.</p>
+</div>
+
+{# Store book data in a script tag to avoid template escaping issues #}
+<script id="book-data" type="application/json">
+{{ catalog.books | dump | safe }}
+</script>
+
+<script id="theme-data" type="application/json">
+{{ catalog.themes | dump | safe }}
+</script>
+
+{# Alpine.js handles client-side filtering #}
+<div x-data="bookCatalog()" x-init="init()">
+
+  {# Search and filters #}
+  <div class="catalog-controls">
+    <div class="search-box">
+      <input 
+        type="search" 
+        x-model="searchQuery" 
+        placeholder="Search by title or author..."
+        class="search-input"
+      >
+    </div>
+    
+    <nav class="theme-filters">
+      <button 
+        @click="activeTheme = 'all'" 
+        :class="{ 'active': activeTheme === 'all' }"
+        class="theme-filter"
+      >
+        All
+      </button>
+      <template x-for="theme in themes" :key="theme.slug">
+        <button 
+          @click="activeTheme = theme.slug" 
+          :class="{ 'active': activeTheme === theme.slug }"
+          class="theme-filter"
+        >
+          <span x-text="theme.name"></span> <span class="theme-count" x-text="'(' + theme.book_count + ')'"></span>
+        </button>
+      </template>
+    </nav>
+  </div>
+  
+  {# Results count #}
+  <p class="results-count" x-text="filteredBooks.length + ' books'"></p>
+  
+  {# Book grid #}
+  <div class="book-grid">
+    <template x-for="book in filteredBooks" :key="book.id">
+      <article class="book-card" :class="{ 'book-card--recommended': book.is_recommended }">
+        <a :href="'/book/' + book.id + '/'" class="book-card__link">
+          <div class="book-card__cover">
+            <template x-if="book.cover_url">
+              <img :src="book.cover_url" alt="" loading="lazy">
+            </template>
+            <template x-if="!book.cover_url">
+              <div class="book-card__placeholder">
+                <span class="book-card__placeholder-title" x-text="book.title.substring(0, 40)"></span>
+              </div>
+            </template>
+            <template x-if="book.is_recommended">
+              <span class="book-card__badge" title="Recommended">★</span>
+            </template>
+          </div>
+          
+          <div class="book-card__info">
+            <h3 class="book-card__title" x-text="book.title"></h3>
+            <p class="book-card__author">
+              <span x-text="book.author || 'Unknown author'"></span>
+              <template x-if="book.translator">
+                <span class="book-card__translator" x-text="'(trans. ' + book.translator + ')'"></span>
+              </template>
+            </p>
+            <template x-if="book.year_published">
+              <p class="book-card__year" x-text="book.year_published"></p>
+            </template>
+          </div>
+        </a>
+      </article>
+    </template>
+  </div>
+  
+  {# Empty state #}
+  <div x-show="filteredBooks.length === 0" class="empty-state">
+    <p>No books match your search.</p>
+  </div>
+  
+</div>
+
+<script>
+function bookCatalog() {
+  return {
+    books: [],
+    themes: [],
+    activeTheme: 'all',
+    searchQuery: '',
+    
+    init() {
+      // Load data from script tags
+      this.books = JSON.parse(document.getElementById('book-data').textContent);
+      this.themes = JSON.parse(document.getElementById('theme-data').textContent);
+
+      // Sort themes by book count (descending)
+      this.themes.sort((a, b) => b.book_count - a.book_count);
+
+      // Check URL for theme filter
+      const params = new URLSearchParams(window.location.search);
+      const themeParam = params.get('theme');
+      if (themeParam) {
+        this.activeTheme = themeParam;
+      }
+    },
+    
+    get filteredBooks() {
+      let result = this.books;
+      
+      // Filter by theme
+      if (this.activeTheme !== 'all') {
+        result = result.filter(b => b.themes && b.themes.includes(this.activeTheme));
+      }
+      
+      // Filter by search
+      if (this.searchQuery.trim()) {
+        const q = this.searchQuery.toLowerCase();
+        result = result.filter(b => 
+          (b.title && b.title.toLowerCase().includes(q)) ||
+          (b.author && b.author.toLowerCase().includes(q))
+        );
+      }
+      
+      return result;
+    }
+  }
+}
+</script>

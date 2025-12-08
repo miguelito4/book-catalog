@@ -1,0 +1,11 @@
+# Book catalog Python dependencies
+
+# HTTP requests for API calls
+requests>=2.28.0
+
+# No other dependencies needed - we use stdlib for:
+# - sqlite3 (database)
+# - json (export)
+# - csv (import)
+# - argparse (CLI)
+# - dataclasses (models)

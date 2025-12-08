@@ -1,0 +1,25 @@
+# Database
+*.db
+
+# Build output
+site/_site/
+_site/
+
+# Dependencies
+node_modules/
+venv/
+__pycache__/
+*.pyc
+
+# Working files
+books_review.csv
+books_to_import.csv
+new_books.csv
+missing_metadata.csv
+isbn_lookup.csv
+
+# OS
+.DS_Store
+
+# Backups
+exports/

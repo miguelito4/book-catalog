@@ -1,0 +1,38 @@
+{#
+  Book card component
+  
+  Usage: {% include "book-card.njk" %}
+  Expects: book object in scope
+#}
+
+<article class="book-card{% if book.is_recommended %} book-card--recommended{% endif %}">
+  <a href="/book/{{ book.id }}/" class="book-card__link">
+    <div class="book-card__cover">
+      {% if book.cover_url %}
+        <img src="{{ book.cover_url }}" alt="" loading="lazy">
+      {% else %}
+        <div class="book-card__placeholder">
+          <span class="book-card__placeholder-title">{{ book.title | truncate(40) }}</span>
+        </div>
+      {% endif %}
+      {% if book.is_recommended %}
+        <span class="book-card__badge" title="Recommended">★</span>
+      {% endif %}
+    </div>
+    
+    <div class="book-card__info">
+      <h3 class="book-card__title">{{ book.title }}</h3>
+      
+      <p class="book-card__author">
+        {{ book.author or "Unknown author" }}
+        {% if book.translator %}
+          <span class="book-card__translator">(trans. {{ book.translator }})</span>
+        {% endif %}
+      </p>
+      
+      {% if book.year_published %}
+        <p class="book-card__year">{{ book.year_published }}</p>
+      {% endif %}
+    </div>
+  </a>
+</article>

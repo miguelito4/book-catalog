@@ -1,0 +1,57 @@
+---
+layout: base.njk
+title: About
+---
+
+{% block content %}
+<article class="about-page" style="max-width: var(--content-width);">
+  <h1>About this catalogue</h1>
+  
+  <p>I once surveyed friends and former colleagues, asking them to describe me in one word. The overwhelming response was “no-bullshit.”</p>
+
+  <p>If I were to choose, I would say, “bibliophile.”</>
+
+  <p>I <em>love</em> books. They foster learning, empathy, and critical thinking, while anchoring focus in a world teeming with distraction.</p>
+
+  <p>I'm drawn to history, and to books that explain how systems work—be they economic, political, cultural, natural, or technological. However, as the years go by, I find myself returning to literature more frequently.</p>
+  
+  <p>I created this project as a personal reading catalogue to share with friends and the world at large. It is a non-exhaustive record of ~700 books. While I ran out of steam uploading the back catalogue, I plan to keep it updated going forward.</p>
+
+  <p>Excluded are countless works of literature and pop fiction, as well as hundreds of titles I’ve forgotten after donating them to local libraries, Goodwill, and my Little Free Library.</p> 
+  
+  <p>There are also bound to be a few gremlins and data errors in the catalog. If you spot an error, feel free to open an issue on GitHub or send me an email.</p>
+
+  <p>Books marked with a ★ are ones that I recommend to any visitor.</p>
+  
+  <h2>Themes</h2>
+
+  <p>The themes are my own loose categories, not an attempt at rigorous classification. There are 11 buckets:</p>
+
+  <ul class="theme list">
+    <li><strong>Fiction:</strong> literature, novels, short stories</li>
+    <li><strong>History:</strong> historical works and historiography</li>
+    <li><strong>Politics & Economics:</strong> political theory, economics, finance, markets</li>
+    <li><strong>Science & Technology:</strong> science writing, technology, engineering</li>
+    <li><strong>Philosophy:</strong> philosophy, ethics</li>
+    <li><strong>Religion:</strong> theology, spirituality, religious texts</li>
+    <li><strong>Reportage:</strong> investigative journalism, narrative non-fiction</li>
+    <li><strong>Travel:</strong> travel writing, not guidebooks</li>
+    <li><strong>Biography</strong></li>
+    <li><strong>Essays & Lectures</strong></li>
+    <li><strong>Poetry</strong></li>
+  </ul>
+  
+  <h2>How it's built</h2>
+  
+  <p>The catalogue is managed with a SQLite database and Python scripts, then exported to a static site built with <a href="https://www.11ty.dev/">Eleventy</a>. Book metadata is enriched from <a href="https://openlibrary.org/">OpenLibrary</a> and Google Books.</p>
+  
+  <p>The code is available on GitHub if you would like to build something similar.</p>
+  
+  <h2>Elsewhere</h2>
+  
+  <ul style="list-style: none; padding: 0;">
+    <li><a href="https://caseyjr.org">caseyjr.org</a> — main site</li>
+    <li><a href="https://bits.caseyjr.org">bits.caseyjr.org</a> — notes and links</li>
+  </ul>
+</article>
+{% endblock %}

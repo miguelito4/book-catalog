@@ -1,0 +1,19 @@
+{
+  "name": "book-catalog",
+  "version": "1.0.0",
+  "description": "Personal book catalog with static site generator",
+  "scripts": {
+    "build": "npx @11ty/eleventy",
+    "serve": "npx @11ty/eleventy --serve",
+    "watch": "npx @11ty/eleventy --watch",
+    "export": "python scripts/export.py",
+    "rebuild": "python scripts/export.py && npx @11ty/eleventy",
+    "dev": "python scripts/export.py && npx @11ty/eleventy --serve"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^2.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

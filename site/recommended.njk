@@ -1,0 +1,25 @@
+---
+layout: base.njk
+title: Recommended
+---
+
+{% block content %}
+<div class="page-header">
+  <h1>Recommended</h1>
+  <p class="page-intro">A non-exhaustive collection of books I'd happily recommend to all visitors.</p>
+</div>
+
+{% set recommendedBooks = catalog.books | recommended %}
+
+{% if recommendedBooks.length > 0 %}
+  <div class="book-grid">
+    {% for book in recommendedBooks %}
+      {% include "book-card.njk" %}
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty-state">
+    <p>No recommended books yet.</p>
+  </div>
+{% endif %}
+{% endblock %}

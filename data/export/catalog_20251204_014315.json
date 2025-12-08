@@ -1,0 +1,31 @@
+{
+  "generated_at": "2025-12-04T01:43:15.702881",
+  "stats": {
+    "total_books": 1,
+    "recommended_count": 1,
+    "themes_count": 7
+  },
+  "themes": [
+    {
+      "slug": "fiction",
+      "name": "Fiction",
+      "description": "Novels and short stories",
+      "book_count": 1
+    }
+  ],
+  "books": [
+    {
+      "id": 1,
+      "title": "2666",
+      "author": "Roberto Bolaño",
+      "year_published": 2004,
+      "reading_status": "read",
+      "year_read": 2023,
+      "is_recommended": true,
+      "themes": [
+        "fiction"
+      ],
+      "links": []
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if title %}{{ title }} · {% endif %}Book Catalog</title>
+  <meta name="description" content="{% block description %}A personal catalog of books read and recommended.{% endblock %}">
+  
+  <!-- Fonts: Libre Baskerville for body, Source Sans for UI -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="/css/style.css">
+  
+  <!-- Alpine.js for filtering -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="/" class="site-title">books.caseyjr.org</a>
+      <nav class="site-nav">
+        <a href="/">Browse</a>
+        <a href="/recommended/">Recommended</a>
+        <a href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+  
+  <main class="site-main">
+    <div class="container">
+      {{ content | safe }}
+    </div>
+  </main>
+  
+  <footer class="site-footer">
+    <div class="container">
+      <p>A personal reading catalog. <a href="https://caseyjr.org">caseyjr.org</a></p>
+    </div>
+  </footer>
+</body>
+</html>

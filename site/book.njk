@@ -1,0 +1,139 @@
+---
+layout: base.njk
+pagination:
+  data: catalog.books
+  size: 1
+  alias: book
+permalink: /book/{{ book.id }}/
+eleventyComputed:
+  title: "{{ book.title }}"
+---
+
+{% block description %}{{ book.summary | truncate(160) | default("A book by " + book.author) }}{% endblock %}
+
+{% block content %}
+<article class="book-detail">
+  <a href="/" class="back-link">← Back to catalog</a>
+  
+  <div class="book-detail__layout">
+    {# Cover #}
+    <div class="book-detail__cover">
+      {% if book.cover_url %}
+        <img src="{{ book.cover_url }}" alt="Cover of {{ book.title }}">
+      {% else %}
+        <div class="book-cover book-cover--placeholder book-cover--large">
+          <span class="book-cover__title">{{ book.title }}</span>
+          <span class="book-cover__author">{{ book.author or "" }}</span>
+        </div>
+      {% endif %}
+      
+      {% if book.is_recommended %}
+        <div class="book-detail__recommended">
+          <span class="recommended-badge">★ Recommended</span>
+        </div>
+      {% endif %}
+    </div>
+    
+    {# Main info #}
+    <div class="book-detail__main">
+      <header class="book-detail__header">
+        <h1 class="book-detail__title">{{ book.title }}</h1>
+        {% if book.subtitle %}
+          <p class="book-detail__subtitle">{{ book.subtitle }}</p>
+        {% endif %}
+        
+        <p class="book-detail__author">
+          by {{ book.author or "Unknown author" }}
+          {% if book.translator %}
+            <span class="book-detail__translator">(translated by {{ book.translator }})</span>
+          {% endif %}
+        </p>
+      </header>
+      
+      {# Metadata #}
+      <dl class="book-detail__meta">
+        {% if book.year_published %}
+          <div class="meta-item">
+            <dt>Published</dt>
+            <dd>{{ book.year_published }}{% if book.publisher %} · {{ book.publisher }}{% endif %}</dd>
+          </div>
+        {% endif %}
+        
+        {% if book.original_year and book.original_year != book.year_published %}
+          <div class="meta-item">
+            <dt>Originally</dt>
+            <dd>{{ book.original_year }}{% if book.original_language %} ({{ book.original_language }}){% endif %}</dd>
+          </div>
+        {% endif %}
+        
+        {% if book.page_count %}
+          <div class="meta-item">
+            <dt>Pages</dt>
+            <dd>{{ book.page_count }}</dd>
+          </div>
+        {% endif %}
+        
+        {% if book.series_name %}
+          <div class="meta-item">
+            <dt>Series</dt>
+            <dd>{{ book.series_name }}{% if book.series_position %} (#{{ book.series_position }}){% endif %}</dd>
+          </div>
+        {% endif %}
+        
+        {% if book.year_read or book.date_read %}
+          <div class="meta-item">
+            <dt>Read</dt>
+            <dd>{{ book.date_read | formatDate or book.year_read }}</dd>
+          </div>
+        {% endif %}
+      </dl>
+      
+      {# Themes #}
+      {% if book.themes and book.themes.length > 0 %}
+        <div class="book-detail__themes">
+          {% for themeSlug in book.themes %}
+            {% for theme in catalog.themes %}
+              {% if theme.slug == themeSlug %}
+                <a href="/?theme={{ themeSlug }}" class="theme-tag">{{ theme.name }}</a>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+        </div>
+      {% endif %}
+      
+      {# Summary #}
+      {% if book.summary or book.my_summary %}
+        <div class="book-detail__summary">
+          <h2>About this book</h2>
+          {{ book.my_summary or book.summary | safe }}
+        </div>
+      {% endif %}
+      
+      {# Personal notes #}
+      {% if book.my_notes %}
+        <div class="book-detail__notes">
+          <h2>Notes</h2>
+          {{ book.my_notes | safe }}
+        </div>
+      {% endif %}
+      
+      {# Links #}
+      {% if book.links and book.links.length > 0 %}
+        <div class="book-detail__links">
+          <h2>Links</h2>
+          <ul class="links-list">
+            {% for link in book.links %}
+              <li>
+                <a href="{{ link.url }}" target="_blank" rel="noopener">
+                  {{ link.title or link.url }}
+                  <span class="link-type">({{ link.type }})</span>
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</article>
+{% endblock %}
