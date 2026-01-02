@@ -1,0 +1,21 @@
+---
+layout: base.njk
+title: What's New
+---
+
+<div class="page-header">
+  <h1>What's New</h1>
+  <p class="page-intro">Recently added to the catalogue.</p>
+</div>
+
+<div class="updates-list">
+  {% for book in catalog.books %}
+    {% if book.date_added %}
+    <div class="update-item">
+      <span class="update-date">{{ book.date_added }}</span>
+      <a href="/book/{{ book.id }}/">{{ book.title }}</a>
+      <span class="update-author">by {{ book.author }}</span>
+    </div>
+    {% endif %}
+  {% endfor %}
+</div>

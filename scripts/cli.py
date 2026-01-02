@@ -65,6 +65,7 @@ def add_book(args):
         is_recommended=args.recommended or False,
         my_notes=args.notes,
         format=args.format,
+        date_added=date.today().isoformat(),
     )
     
     book_id = BookDB.add(book)

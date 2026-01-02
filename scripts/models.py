@@ -52,6 +52,7 @@ class Book:
     date_read: Optional[date] = None
     year_read: Optional[int] = None
     reread: int = 0
+    date_added: Optional[str] = None
     
     # Assessment
     is_recommended: bool = False
@@ -111,8 +112,8 @@ class BookDB:
                     cover_url, summary,
                     reading_status, date_started, date_read, year_read, reread,
                     is_recommended, my_notes, my_summary, reading_context,
-                    series_name, series_position
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    series_name, series_position, date_added
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 book.isbn, book.isbn13, book.openlibrary_key,
                 book.title, book.subtitle, book.author, book.additional_authors, book.translator,
@@ -121,7 +122,7 @@ class BookDB:
                 book.cover_url, book.summary,
                 book.reading_status, book.date_started, book.date_read, book.year_read, book.reread,
                 book.is_recommended, book.my_notes, book.my_summary, book.reading_context,
-                book.series_name, book.series_position
+                book.series_name, book.series_position, book.date_added
             ))
             conn.commit()
             return cursor.lastrowid
@@ -310,6 +311,7 @@ class BookDB:
             reading_context=row["reading_context"],
             series_name=row["series_name"],
             series_position=row["series_position"],
+            date_added=row["date_added"],
             created_at=row["created_at"],
             updated_at=row["updated_at"],
         )

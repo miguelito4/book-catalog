@@ -89,6 +89,7 @@ def export_catalog(output_path: Path, pretty: bool = False) -> None:
             "summary": book.summary,
             "reading_status": book.reading_status,
             "date_read": book.date_read,
+            "date_added": book.date_added,
             "year_read": book.year_read,
             "is_recommended": book.is_recommended,
             "my_notes": book.my_notes,
