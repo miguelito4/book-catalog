@@ -9,13 +9,11 @@ title: What's New
 </div>
 
 <div class="updates-list">
-  {% for book in catalog.books %}
-    {% if book.date_added %}
+  {% for book in catalog.books | selectattr("date_added") | sort(attribute="date_added", reverse=true) %}
     <div class="update-item">
       <span class="update-date">{{ book.date_added }}</span>
       <a href="/book/{{ book.id }}/">{{ book.title }}</a>
       <span class="update-author">by {{ book.author }}</span>
     </div>
-    {% endif %}
   {% endfor %}
 </div>
