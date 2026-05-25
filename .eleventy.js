@@ -103,7 +103,7 @@ module.exports = function(eleventyConfig) {
       includes: "_includes",
       data: "_data",
     },
-    templateFormats: ["njk", "md", "html"],
+    templateFormats: ["njk", "md", "html", "11ty.js"],
     htmlTemplateEngine: "njk",
     markdownTemplateEngine: "njk",
   };
