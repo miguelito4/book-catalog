@@ -18,6 +18,7 @@ module.exports = {
       books: catalog.books.map((b) => ({
         id: b.id,
         isbn13: b.isbn13 ?? null,
+        recommended: b.is_recommended === true,
       })),
     };
     return JSON.stringify(output);
