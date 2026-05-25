@@ -84,6 +84,8 @@ def export_catalog(output_path: Path, pretty: bool = False) -> None:
             "original_language": book.original_language,
             "publisher": book.publisher,
             "page_count": book.page_count,
+            "isbn": book.isbn,
+            "isbn13": book.isbn13,
             "format": book.format,
             "cover_url": book.cover_url,
             "summary": book.summary,
