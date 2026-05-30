@@ -24,3 +24,4 @@ isbn_lookup.csv
 # Backups
 exports/
 data/export/*.json
+.claude/
