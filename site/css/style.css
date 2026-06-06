@@ -320,23 +320,38 @@ button {
    Let the nav drop below the pilcrow and wrap; the exit takes its own line,
    set apart by a hairline since the vertical divider reads wrong once wrapped. */
 @media (max-width: 768px) {
-  /* allow the full-width nav to drop below the pilcrow instead of shrinking */
+  /* Pilcrow anchors a compact nav: tiny gap below it, the four in-site links on
+     one shrunk row, the exit on its own line below a hairline. */
+
+  /* Trim the generous desktop header padding so the whole strip reads tight
+     (desktop keeps var(--space-lg); override is scoped to this media query). */
+  .site-header {
+    padding: var(--space-md) 0;
+  }
+
   .site-header .container {
     flex-wrap: wrap;
-    row-gap: var(--space-md);
+    row-gap: var(--space-xs);
   }
 
   .site-nav {
     flex-wrap: wrap;
     width: 100%;
-    column-gap: var(--space-lg);
-    row-gap: var(--space-sm);
+    column-gap: var(--space-sm);
+    row-gap: 0;
   }
 
+  /* Shrink a notch (0.82rem — the largest that keeps all four on one row at
+     375px) and tighten gap/tracking; keep the 44px tap height via vertical
+     padding, with negative margin so the visual row stays tight. */
   .site-nav a {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
+    padding: var(--space-sm) 0;
+    margin: calc(-1 * var(--space-sm)) 0;
+    font-size: 0.82rem;
+    letter-spacing: 0.02em;
   }
 
   .nav-sep {
