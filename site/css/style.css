@@ -2,8 +2,8 @@
  * Book Catalog Styles
  *
  * Design system: caseyjr.org token system
- * - Petrol teal (--accent) is the single primary accent
- * - Terracotta (--berry) is the pop: off-site links + book signals only
+ * - Verdigris (--accent) is the single primary accent
+ * - Ink-blue (--berry) is the pop: off-site links + book signals only
  * - Plum (--plum) is the imprint color, held in reserve
  * - Newsreader (--font-work) for titles + long-form prose,
  *   Rosario (--font-voice) for body / UI
@@ -25,26 +25,27 @@
   --ink-soft: #2a2a30;
   --muted: #6e6c72;
 
-  /* Spine: petrol teal (primary accent) */
-  --accent: #0e6e78;
-  --accent-deep: #0a565f;
-  --accent-lift: #1a8693;
-  --accent-block: #0e6e78;
-  --emerald-bg: rgba(14, 110, 120, 0.07);
+  /* Spine: verdigris (primary accent) */
+  --accent: #1F6E5A;
+  --accent-deep: #155041;
+  --accent-lift: #2A8770;
+  --accent-block: #1F6E5A;
+  --emerald-bg: rgba(31, 110, 90, 0.07);
 
-  /* Pop: terracotta (off-site / book signal) */
-  --berry: #c04a2e;
-  --berry-soft: #d68a70;
-  --berry-wash: rgba(192, 74, 46, 0.18);
+  /* Pop: ink-blue (off-site / book signal) */
+  --berry: #3A6E92;
+  --berry-soft: #7595B5;
+  --berry-wash: rgba(58, 110, 146, 0.18);
 
   /* Imprint: plum (reserved, sparing) */
   --plum: #311D3F;
   --plum-soft: #b89dbf;
   --plum-wash: rgba(49, 29, 63, 0.18);
+  --plum-fg: #6B4C8A;
 
   /* Rules */
-  --rule: rgba(14, 110, 120, 0.20);
-  --rule-soft: rgba(14, 110, 120, 0.11);
+  --rule: rgba(31, 110, 90, 0.20);
+  --rule-soft: rgba(31, 110, 90, 0.11);
 
   /* Cards */
   --card-bg: rgba(255, 255, 255, 0.4);
@@ -85,22 +86,23 @@
     --ink-soft: #c9c4ba;
     --muted: #7c7972;
 
-    --accent: #2f9aa6;
-    --accent-deep: #247c86;
-    --accent-lift: #4bb6c3;
-    --accent-block: #156c75;
-    --emerald-bg: rgba(47, 154, 166, 0.12);
+    --accent: #5DB89A;
+    --accent-deep: #4A9E80;
+    --accent-lift: #7DD1B0;
+    --accent-block: #1A5443;
+    --emerald-bg: rgba(93, 184, 154, 0.12);
 
-    --berry: #d4603f;
-    --berry-soft: #c47e64;
-    --berry-wash: rgba(212, 96, 63, 0.18);
+    --berry: #79A2C5;
+    --berry-soft: #A8C5DD;
+    --berry-wash: rgba(121, 162, 197, 0.18);
 
     --plum: #5e3c6a;
     --plum-soft: #d4b8db;
     --plum-wash: rgba(94, 60, 106, 0.22);
+    --plum-fg: #D4B8DB;
 
-    --rule: rgba(47, 154, 166, 0.26);
-    --rule-soft: rgba(47, 154, 166, 0.13);
+    --rule: rgba(93, 184, 154, 0.26);
+    --rule-soft: rgba(93, 184, 154, 0.13);
 
     --card-bg: rgba(255, 255, 255, 0.05);
     --card-bg-hover: rgba(255, 255, 255, 0.10);
@@ -116,22 +118,23 @@
   --ink-soft: #c9c4ba;
   --muted: #7c7972;
 
-  --accent: #2f9aa6;
-  --accent-deep: #247c86;
-  --accent-lift: #4bb6c3;
-  --accent-block: #156c75;
-  --emerald-bg: rgba(47, 154, 166, 0.12);
+  --accent: #5DB89A;
+  --accent-deep: #4A9E80;
+  --accent-lift: #7DD1B0;
+  --accent-block: #1A5443;
+  --emerald-bg: rgba(93, 184, 154, 0.12);
 
-  --berry: #d4603f;
-  --berry-soft: #c47e64;
-  --berry-wash: rgba(212, 96, 63, 0.18);
+  --berry: #79A2C5;
+  --berry-soft: #A8C5DD;
+  --berry-wash: rgba(121, 162, 197, 0.18);
 
   --plum: #5e3c6a;
   --plum-soft: #d4b8db;
   --plum-wash: rgba(94, 60, 106, 0.22);
+  --plum-fg: #D4B8DB;
 
-  --rule: rgba(47, 154, 166, 0.26);
-  --rule-soft: rgba(47, 154, 166, 0.13);
+  --rule: rgba(93, 184, 154, 0.26);
+  --rule-soft: rgba(93, 184, 154, 0.13);
 
   --card-bg: rgba(255, 255, 255, 0.05);
   --card-bg-hover: rgba(255, 255, 255, 0.10);
@@ -228,20 +231,38 @@ button {
 .site-header .container {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  /* Pilcrow is an inline-flex icon-mark (no useful text baseline); center the
+     row so the glyph and the nav text sit level. */
+  align-items: center;
 }
 
-.site-title {
-  font-family: var(--font-work);
-  font-size: 1.25rem;
-  font-weight: 400;
-  font-style: italic;
-  color: var(--ink);
+/* Home pilcrow — sits where the wordmark was. The glyph is small, but the <a>
+   keeps a >=44x44 hit area; negative margin pulls the box back so it doesn't
+   bloat the header row. */
+.site-home {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin: calc(-1 * var(--space-sm));
   text-decoration: none;
+}
+
+.pilcrow {
+  font-family: var(--font-work);
+  font-size: 1.65rem;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.site-home:hover .pilcrow {
+  color: var(--accent-lift);
 }
 
 .site-nav {
   display: flex;
+  align-items: center;
   gap: var(--space-lg);
 }
 
@@ -255,6 +276,79 @@ button {
 
 .site-nav a:hover {
   color: var(--accent);
+}
+
+/* Thin vertical divider between the in-site links and the exit. Decorative. */
+.nav-sep {
+  width: 1px;
+  height: 1.1em;
+  background: var(--rule);
+  /* extra breathing room beyond the existing nav gap */
+  margin: 0 var(--space-xs);
+}
+
+/* Exit to the main site: an off-site departure, quieter via the berry token.
+   Scoped under .site-nav to out-rank `.site-nav a` (which would otherwise win
+   on specificity and paint it muted). */
+.site-nav .nav-exit {
+  display: inline-flex;
+  align-items: center;
+  color: var(--berry);
+}
+
+.site-nav .nav-exit:hover {
+  color: var(--berry-soft);
+}
+
+.exit-arrow {
+  display: inline-block;
+  font-size: 0.85em;
+  margin-left: 0.15em;
+  transition: transform 0.2s;
+}
+
+.site-nav .nav-exit:hover .exit-arrow {
+  transform: translate(1px, -1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exit-arrow { transition: none; }
+  .site-nav .nav-exit:hover .exit-arrow { transform: none; }
+}
+
+/* Mobile: the header had zero responsive handling, so the single row collided.
+   Let the nav drop below the pilcrow and wrap; the exit takes its own line,
+   set apart by a hairline since the vertical divider reads wrong once wrapped. */
+@media (max-width: 768px) {
+  /* allow the full-width nav to drop below the pilcrow instead of shrinking */
+  .site-header .container {
+    flex-wrap: wrap;
+    row-gap: var(--space-md);
+  }
+
+  .site-nav {
+    flex-wrap: wrap;
+    width: 100%;
+    column-gap: var(--space-lg);
+    row-gap: var(--space-sm);
+  }
+
+  .site-nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .nav-sep {
+    display: none;
+  }
+
+  .site-nav .nav-exit {
+    width: 100%;
+    margin-top: var(--space-sm);
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--rule);
+  }
 }
 
 
