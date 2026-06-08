@@ -230,40 +230,18 @@ button {
 
 .site-header .container {
   display: flex;
-  justify-content: space-between;
-  /* Pilcrow is an inline-flex icon-mark (no useful text baseline); center the
-     row so the glyph and the nav text sit level. */
+  /* Nav is the only flex child; it left-aligns and its .nav-exit pushes itself
+     to the far right via margin-left:auto. */
+  justify-content: flex-start;
   align-items: center;
-}
-
-/* Home pilcrow — sits where the wordmark was. The glyph is small, but the <a>
-   keeps a >=44x44 hit area; negative margin pulls the box back so it doesn't
-   bloat the header row. */
-.site-home {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
-  margin: calc(-1 * var(--space-sm));
-  text-decoration: none;
-}
-
-.pilcrow {
-  font-family: var(--font-work);
-  font-size: 1.65rem;
-  line-height: 1;
-  color: var(--accent);
-}
-
-.site-home:hover .pilcrow {
-  color: var(--accent-lift);
 }
 
 .site-nav {
   display: flex;
   align-items: center;
   gap: var(--space-lg);
+  /* Span the row so the divider + exit can be pushed to the far edge. */
+  width: 100%;
 }
 
 .site-nav a {
@@ -278,13 +256,16 @@ button {
   color: var(--accent);
 }
 
-/* Thin vertical divider between the in-site links and the exit. Decorative. */
+/* Thin vertical divider between the in-site links and the exit. Decorative.
+   The auto left margin eats the slack so the in-site links stay left-aligned
+   while the divider + exit sit together at the far right. */
 .nav-sep {
   width: 1px;
   height: 1.1em;
   background: var(--rule);
   /* extra breathing room beyond the existing nav gap */
   margin: 0 var(--space-xs);
+  margin-left: auto;
 }
 
 /* Exit to the main site: an off-site departure, quieter via the berry token.
@@ -317,21 +298,14 @@ button {
 }
 
 /* Mobile: the header had zero responsive handling, so the single row collided.
-   Let the nav drop below the pilcrow and wrap; the exit takes its own line,
-   set apart by a hairline since the vertical divider reads wrong once wrapped. */
+   The four in-site links left-align from the container edge on one shrunk row;
+   the exit takes its own line, set apart by a hairline since the vertical
+   divider reads wrong once wrapped. */
 @media (max-width: 768px) {
-  /* Pilcrow anchors a compact nav: tiny gap below it, the four in-site links on
-     one shrunk row, the exit on its own line below a hairline. */
-
   /* Trim the generous desktop header padding so the whole strip reads tight
      (desktop keeps var(--space-lg); override is scoped to this media query). */
   .site-header {
     padding: var(--space-md) 0;
-  }
-
-  .site-header .container {
-    flex-wrap: wrap;
-    row-gap: var(--space-xs);
   }
 
   .site-nav {
