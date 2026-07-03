@@ -2,9 +2,9 @@
  * Book Catalog Styles
  *
  * Design system: caseyjr.org token system
- * - Verdigris (--accent) is the single primary accent
- * - Ink-blue (--berry) is the pop: off-site links + book signals only
- * - Plum (--plum) is the imprint color, held in reserve
+ * - Teal (--accent) is the single primary accent
+ * - Muted gold / champagne (--berry) is the pop: off-site links + book signals only
+ * - Violet (--plum) is the imprint color, held in reserve
  * - Newsreader (--font-work) for titles + long-form prose,
  *   Rosario (--font-voice) for body / UI
  * - All color is centralized below as custom properties; no hardcoded
@@ -17,7 +17,7 @@
 
 :root {
   /* Surfaces */
-  --paper: #FCFCFC;
+  --paper: #ffffff;
   --paper-warm: #e6dfd0;
 
   /* Text */
@@ -25,27 +25,27 @@
   --ink-soft: #2a2a30;
   --muted: #6e6c72;
 
-  /* Spine: verdigris (primary accent) */
-  --accent: #1F6E5A;
-  --accent-deep: #155041;
-  --accent-lift: #2A8770;
-  --accent-block: #1F6E5A;
-  --emerald-bg: rgba(31, 110, 90, 0.07);
+  /* Spine: teal (primary accent) */
+  --accent: #11695C;
+  --accent-deep: #0E5247;
+  --accent-lift: #178374;
+  --accent-block: #11695C;
+  --emerald-bg: rgba(17, 105, 92, 0.07);
 
-  /* Pop: ink-blue (off-site / book signal) */
-  --berry: #3A6E92;
-  --berry-soft: #7595B5;
-  --berry-wash: rgba(58, 110, 146, 0.18);
+  /* Pop: muted gold (off-site / book signal) */
+  --berry: #8A6D1E;
+  --berry-soft: #A98C3C;
+  --berry-wash: rgba(138, 109, 30, 0.18);
 
-  /* Imprint: plum (reserved, sparing) */
-  --plum: #311D3F;
-  --plum-soft: #b89dbf;
-  --plum-wash: rgba(49, 29, 63, 0.18);
-  --plum-fg: #6B4C8A;
+  /* Imprint: violet (reserved, sparing) */
+  --plum: #342150;
+  --plum-soft: #AC9BCB;
+  --plum-wash: rgba(52, 33, 80, 0.18);
+  --plum-fg: #3E2A5C;
 
   /* Rules */
-  --rule: rgba(31, 110, 90, 0.20);
-  --rule-soft: rgba(31, 110, 90, 0.11);
+  --rule: rgba(17, 105, 92, 0.20);
+  --rule-soft: rgba(17, 105, 92, 0.11);
 
   /* Cards */
   --card-bg: rgba(255, 255, 255, 0.4);
@@ -86,23 +86,23 @@
     --ink-soft: #c9c4ba;
     --muted: #7c7972;
 
-    --accent: #5DB89A;
-    --accent-deep: #4A9E80;
-    --accent-lift: #7DD1B0;
-    --accent-block: #1A5443;
-    --emerald-bg: rgba(93, 184, 154, 0.12);
+    --accent: #5CBEAC;
+    --accent-deep: #80CFC1;
+    --accent-lift: #9BDDCE;
+    --accent-block: #0F5249;
+    --emerald-bg: rgba(92, 190, 172, 0.12);
 
-    --berry: #79A2C5;
-    --berry-soft: #A8C5DD;
-    --berry-wash: rgba(121, 162, 197, 0.18);
+    --berry: #D8CBA8;
+    --berry-soft: #E6DCC2;
+    --berry-wash: rgba(216, 203, 168, 0.18);
 
-    --plum: #5e3c6a;
-    --plum-soft: #d4b8db;
-    --plum-wash: rgba(94, 60, 106, 0.22);
-    --plum-fg: #D4B8DB;
+    --plum: #4D3A6E;
+    --plum-soft: #C9B8DE;
+    --plum-wash: rgba(77, 58, 110, 0.22);
+    --plum-fg: #BCA6DE;
 
-    --rule: rgba(93, 184, 154, 0.26);
-    --rule-soft: rgba(93, 184, 154, 0.13);
+    --rule: rgba(92, 190, 172, 0.26);
+    --rule-soft: rgba(92, 190, 172, 0.13);
 
     --card-bg: rgba(255, 255, 255, 0.05);
     --card-bg-hover: rgba(255, 255, 255, 0.10);
@@ -118,23 +118,23 @@
   --ink-soft: #c9c4ba;
   --muted: #7c7972;
 
-  --accent: #5DB89A;
-  --accent-deep: #4A9E80;
-  --accent-lift: #7DD1B0;
-  --accent-block: #1A5443;
-  --emerald-bg: rgba(93, 184, 154, 0.12);
+  --accent: #5CBEAC;
+  --accent-deep: #80CFC1;
+  --accent-lift: #9BDDCE;
+  --accent-block: #0F5249;
+  --emerald-bg: rgba(92, 190, 172, 0.12);
 
-  --berry: #79A2C5;
-  --berry-soft: #A8C5DD;
-  --berry-wash: rgba(121, 162, 197, 0.18);
+  --berry: #D8CBA8;
+  --berry-soft: #E6DCC2;
+  --berry-wash: rgba(216, 203, 168, 0.18);
 
-  --plum: #5e3c6a;
-  --plum-soft: #d4b8db;
-  --plum-wash: rgba(94, 60, 106, 0.22);
-  --plum-fg: #D4B8DB;
+  --plum: #4D3A6E;
+  --plum-soft: #C9B8DE;
+  --plum-wash: rgba(77, 58, 110, 0.22);
+  --plum-fg: #BCA6DE;
 
-  --rule: rgba(93, 184, 154, 0.26);
-  --rule-soft: rgba(93, 184, 154, 0.13);
+  --rule: rgba(92, 190, 172, 0.26);
+  --rule-soft: rgba(92, 190, 172, 0.13);
 
   --card-bg: rgba(255, 255, 255, 0.05);
   --card-bg-hover: rgba(255, 255, 255, 0.10);
@@ -188,7 +188,7 @@ a:hover {
   color: var(--accent-deep);
 }
 
-/* Off-site links are the terracotta pop — external (absolute) hrefs only. */
+/* Off-site links are the muted-gold pop — external (absolute) hrefs only. */
 a[href^="http"] {
   color: var(--berry);
 }
