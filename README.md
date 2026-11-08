@@ -110,6 +110,23 @@ python3 scripts/apply_pending.py
 
 To drop a book, tick *Skip* and merge. Closing the PR without merging just means the same books come back next sync. If apply fails after a merge, edit the merged PR's description and re-run *Apply reviewed books* from the Actions tab with the PR number.
 
+### The iOS Shortcut ("Sync Books")
+
+When a book is finished in Reading List, one tap pushes the export to `inbox/reading-list.csv` through GitHub's contents API. That commit triggers the sync above. Build it on a Mac (it syncs to the iPhone through iCloud) and run it from the phone:
+
+| # | Action | Settings |
+|---|--------|----------|
+| 1 | **Reading List → Export data** | as **CSV** |
+| 2 | **Base64 Encode** | input: Export · *Line Breaks:* **None** |
+| 3 | **Get Contents of URL** | `https://api.github.com/repos/<owner>/book-catalog/contents/inbox/reading-list.csv` · **GET** · headers `Authorization: Bearer <token>`, `Accept: application/vnd.github+json` |
+| 4 | **Get Dictionary Value** | `sha` in *Contents of URL*, the current file's ID, required to replace it |
+| 5 | **Get Contents of URL** | same URL and headers · **PUT** · JSON body: `message` = `Reading List export`, `content` = *Base64 Encoded*, `sha` = *Dictionary Value*, `branch` = `main` |
+| 6 | **Show Result** | success shows `"commit"`; failure shows GitHub's `"message"` |
+
+- **Token:** fine-grained personal access token, only this repo, *Contents: read and write*. Use a separate token from any laptop token so either can be revoked alone.
+- **Insert variables** (steps 5's `content` and `sha`) with right-click → *Insert Variable*. They're only offered from actions *above* the current one.
+- **Run it manually** (home screen or Siri) rather than as an "app closed" automation. The export changes whenever reading progress does, so an automation would commit on every close even with nothing new to add.
+
 Setup: repo secret `ANTHROPIC_API_KEY`; optional repo variable `CLAUDE_MODEL`; *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests*.
 
 ### Managing Themes

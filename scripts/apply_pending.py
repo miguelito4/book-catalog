@@ -154,9 +154,10 @@ def main() -> int:
     REVIEW_PATH.unlink(missing_ok=True)
 
     if not args.no_export:
-        subprocess.run([sys.executable, str(ROOT / "scripts" / "export.py")], check=True,
-                       stdout=subprocess.DEVNULL)
-        subprocess.run([sys.executable, str(ROOT / "scripts" / "db_dump.py")], check=True)
+        sys.stdout.flush()  # keep the summary first when output is piped (commit messages)
+        for script in ("export.py", "db_dump.py"):
+            subprocess.run([sys.executable, str(ROOT / "scripts" / script)], check=True,
+                           stdout=subprocess.DEVNULL)
     return 0
 
 

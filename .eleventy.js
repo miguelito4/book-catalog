@@ -58,6 +58,16 @@ module.exports = function(eleventyConfig) {
     return books.filter(book => book.themes && book.themes.includes(themeSlug));
   });
   
+  // Custom filter: the Updates feed. Same set as before (books entered since the
+  // page began, i.e. with date_added), ordered and dated by when they were
+  // finished (date_read from Reading List), falling back to the entry date.
+  eleventyConfig.addFilter("updatesFeed", (books) => {
+    return books
+      .filter(book => book.date_added)
+      .map(book => ({ ...book, update_date: book.date_read || book.date_added }))
+      .sort((a, b) => b.update_date.localeCompare(a.update_date) || b.id - a.id);
+  });
+
   // Custom filter: get recommended books
   eleventyConfig.addFilter("recommended", (books) => {
     return books.filter(book => book.is_recommended);
