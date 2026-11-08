@@ -33,9 +33,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from sync_common import (  # noqa: E402
     INBOX, PENDING_PATH, REVIEW_PATH, author_surname, connect, ensure_schema,
-    get_meta, norm_isbn, norm_title, parse_review, render_review, themes,
+    clean_author, clean_title, get_meta, norm_isbn, norm_title, parse_review,
+    render_review, themes,
 )
-from preprocess_reading_list import flip_author_name, guess_themes  # noqa: E402
+from preprocess_reading_list import guess_themes  # noqa: E402
 
 CLAUDE_URL = "https://api.anthropic.com/v1/messages"
 CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-haiku-5-5")
@@ -75,9 +76,9 @@ def candidates(rows, conn) -> list[dict]:
         pub = (r.get("Publication Date") or "").strip()
         out.append({
             "reading_list_id": rl_id,
-            "title": (r.get("Title") or "").strip(),
+            "title": clean_title(r.get("Title") or ""),
             "subtitle": (r.get("Subtitle") or "").strip() or None,
-            "author": flip_author_name((r.get("Authors") or "").strip()) or None,
+            "author": clean_author(r.get("Authors") or "") or None,
             "isbn13": norm_isbn(r.get("ISBN-13")) or None,
             "page_count": to_int(r.get("Page Count")),
             "year_published": to_int(pub[:4]) if re.match(r"^\d{4}", pub) else None,
