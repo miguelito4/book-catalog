@@ -82,6 +82,28 @@ python scripts/cli.py add --isbn 9780374529253 --recommended
 python scripts/cli.py import --file reading-list.csv
 ```
 
+### Syncing from Reading List
+
+New books come from a [Reading List](https://readinglist.app/) CSV export. Any book finished on or after the sync cutoff (`meta.sync_cutoff`, initially 2026-08-04) that isn't already in the catalog becomes a review batch:
+
+```bash
+# Build a review batch from an export (default: newest inbox/*.csv)
+python scripts/sync_reading_list.py --csv "Reading List - 2026-11-08.csv"
+#   -> inbox/pending.json   enriched records (Open Library / Google Books)
+#   -> inbox/review.md      review form: every theme as a checkbox, suggestions pre-checked
+
+# Tick themes / ⭐ Recommended / Skip in review.md, then apply
+python scripts/apply_pending.py
+#   -> writes the database, refreshes catalog.json and books.sql, clears inbox/
+```
+
+- **Themes** are suggested by Claude when `ANTHROPIC_API_KEY` is set (model: `CLAUDE_MODEL`, default `claude-haiku-5-5`), otherwise by subject keywords. Only existing theme slugs can be suggested or applied.
+- **Duplicates:** a book matching an existing entry by ISBN-13 or title+author arrives with *Already in catalog* checked. Applying links the entry (`reading_list_id`, plus a missing finish date) and adds nothing new. Untick it to add the book as new.
+- **Skips** are remembered in `sync_skips` and never offered again.
+- `date_read` is Reading List's *Finished Reading*; `date_added` is the day the batch was applied.
+
+In the automated flow (#1) the review form is the PR description and the merge applies it.
+
 ### Managing Themes
 
 ```bash

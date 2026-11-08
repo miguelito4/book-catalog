@@ -38,5 +38,8 @@ jobs:
       - name: catalog.json matches database
         run: python scripts/check_catalog.py
 
+      - name: Sync tests
+        run: python -m unittest discover tests -v
+
       - name: Build site
         run: npm run build

@@ -147,10 +147,11 @@ def extract_cover_url(data: Dict[str, Any], source: str) -> Optional[str]:
     return None
 
 
-def enrich_book(book: Book, force: bool = False) -> bool:
+def enrich_book(book: Book, force: bool = False, save: bool = True) -> bool:
     """
     Enrich a single book with metadata from external APIs.
-    Returns True if any data was updated.
+    Returns True if any data was updated. With save=False the Book is only
+    updated in memory (used by sync_reading_list.py before a book is in the DB).
     """
     print(f"Enriching: {book.title} by {book.author or 'Unknown'}")
     
@@ -271,7 +272,7 @@ def enrich_book(book: Book, force: bool = False) -> bool:
             updated = True
     
     # Save if we found anything
-    if updated:
+    if updated and save:
         BookDB.update(book)
         print(f"  Saved updates")
     else:
