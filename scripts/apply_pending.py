@@ -82,6 +82,9 @@ def apply(pending: list[dict], decisions: dict, conn) -> dict:
             summary["skipped"].append(p["title"])
             continue
 
+        if not d["themes"]:
+            raise ReviewError(f"No theme ticked for '{p['title']}'. Tick at least one, or Skip it.")
+
         values = {k: p.get(k) for k in BOOK_FIELDS}
         values.update(
             reading_status="read",
@@ -95,7 +98,7 @@ def apply(pending: list[dict], decisions: dict, conn) -> dict:
         for slug in d["themes"]:
             conn.execute("INSERT OR IGNORE INTO book_themes (book_id, theme_id) VALUES (?, ?)",
                          (cur.lastrowid, theme_ids[slug]))
-        summary["added"].append(p["title"] + ("" if d["themes"] else " (no themes!)"))
+        summary["added"].append(f"{p['title']} [{', '.join(d['themes'])}]")
         if d["recommended"]:
             summary["recommended"].append(p["title"])
     return summary
@@ -106,6 +109,8 @@ def main() -> int:
     ap.add_argument("--review", type=Path, default=REVIEW_PATH, help="Review form markdown")
     ap.add_argument("--pending", type=Path, default=PENDING_PATH)
     ap.add_argument("--no-export", action="store_true", help="Skip catalog.json / books.sql refresh")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="Validate the review and report what would happen; change nothing")
     args = ap.parse_args()
 
     if not args.pending.exists():
@@ -118,8 +123,12 @@ def main() -> int:
     conn = connect()
     ensure_schema(conn)
     try:
-        with conn:  # one transaction
+        if args.dry_run:
             summary = apply(pending, decisions, conn)
+            conn.rollback()
+        else:
+            with conn:  # one transaction
+                summary = apply(pending, decisions, conn)
     except ReviewError as e:
         print(f"Review error, nothing applied: {e}", file=sys.stderr)
         return 1
@@ -131,6 +140,10 @@ def main() -> int:
             print(f"{k.capitalize()} ({len(items)}):")
             for i in items:
                 print(f"  - {i}")
+
+    if args.dry_run:
+        print("Dry run: review is valid, nothing changed.")
+        return 0
 
     args.pending.unlink(missing_ok=True)
     REVIEW_PATH.unlink(missing_ok=True)

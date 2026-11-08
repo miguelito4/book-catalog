@@ -138,7 +138,10 @@ def parse_review(markdown: str) -> dict[str, dict]:
     return result
 
 
-def render_review(pending: list[dict], vocab: list[dict]) -> str:
+def render_review(pending: list[dict], vocab: list[dict], decisions: dict | None = None) -> str:
+    """Render the review form. `decisions` (from parse_review of an open PR's body)
+    carries over ticks already made, so a re-sync never discards review work."""
+    decisions = decisions or {}
     n = len(pending)
     lines = [
         f"## Review: {n} book{'s' if n != 1 else ''} finished in Reading List",
@@ -159,14 +162,18 @@ def render_review(pending: list[dict], vocab: list[dict]) -> str:
             lines.append(f"<sub>Themes suggested by {p['theme_source']}"
                          + (f": {p['theme_reason']}" if p.get("theme_reason") else "") + "</sub>")
             lines.append("")
-        lines.append("- [ ] ⭐ Recommended <!-- f:recommended -->")
+        prior = decisions.get(p["reading_list_id"])
         dup = p.get("possible_duplicate")
+        star = prior["recommended"] if prior else False
+        link = (prior["link"] == dup["id"]) if (prior and dup) else bool(dup)
+        skip = prior["skip"] if prior else False
+        lines.append(f"- [{'x' if star else ' '}] ⭐ Recommended <!-- f:recommended -->")
         if dup:
-            lines.append(f"- [x] Already in catalog: #{dup['id']} *{dup['title']}* ({dup['reason']}) "
-                         f"<!-- f:link:{dup['id']} -->")
-        lines.append("- [ ] Skip, don't add <!-- f:skip -->")
+            lines.append(f"- [{'x' if link else ' '}] Already in catalog: #{dup['id']} *{dup['title']}* "
+                         f"({dup['reason']}) <!-- f:link:{dup['id']} -->")
+        lines.append(f"- [{'x' if skip else ' '}] Skip, don't add <!-- f:skip -->")
         lines += ["", "**Themes**"]
-        suggested = set(p.get("suggested_themes") or [])
+        suggested = set(prior["themes"] if prior else (p.get("suggested_themes") or []))
         for t in vocab:
             box = "x" if t["slug"] in suggested else " "
             lines.append(f"- [{box}] {t['name']} <!-- t:{t['slug']} -->")

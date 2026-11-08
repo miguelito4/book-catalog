@@ -33,7 +33,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from sync_common import (  # noqa: E402
     INBOX, PENDING_PATH, REVIEW_PATH, author_surname, connect, ensure_schema,
-    get_meta, norm_isbn, norm_title, render_review, themes,
+    get_meta, norm_isbn, norm_title, parse_review, render_review, themes,
 )
 from preprocess_reading_list import flip_author_name, guess_themes  # noqa: E402
 
@@ -223,6 +223,10 @@ def main() -> int:
     ap.add_argument("--csv", type=Path, help="Reading List export (default: newest inbox/*.csv)")
     ap.add_argument("--no-enrich", action="store_true", help="Skip Open Library / Google Books lookups")
     ap.add_argument("--no-claude", action="store_true", help="Keyword theme matching only")
+    ap.add_argument("--preserve-from", type=Path,
+                    help="Existing review form (open PR body) whose ticks should carry over")
+    ap.add_argument("--limit", type=int, default=40,
+                    help="Max books per batch (keeps the PR description under GitHub's size limit)")
     args = ap.parse_args()
 
     path = args.csv or newest_csv()
@@ -234,6 +238,10 @@ def main() -> int:
     ensure_schema(conn)
     books = candidates(read_csv(path), conn)
     print(f"{path.name}: {len(books)} new finished book(s) since {get_meta(conn, 'sync_cutoff')}")
+
+    if len(books) > args.limit:
+        print(f"Batching: first {args.limit} now, the rest after this batch is merged")
+        books = books[:args.limit]
 
     if not books:
         for p in (PENDING_PATH, REVIEW_PATH):
@@ -251,7 +259,12 @@ def main() -> int:
     for b in books:
         b.pop("_subjects", None)
     PENDING_PATH.write_text(json.dumps(books, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    REVIEW_PATH.write_text(render_review(books, vocab), encoding="utf-8")
+    prior = {}
+    if args.preserve_from and args.preserve_from.exists():
+        prior = parse_review(args.preserve_from.read_text(encoding="utf-8"))
+        kept = sum(1 for b in books if b["reading_list_id"] in prior)
+        print(f"Carrying over review ticks for {kept} book(s) from {args.preserve_from}")
+    REVIEW_PATH.write_text(render_review(books, vocab, prior), encoding="utf-8")
     dups = sum(1 for b in books if b["possible_duplicate"])
     print(f"Wrote {PENDING_PATH.relative_to(PENDING_PATH.parent.parent)} and "
           f"{REVIEW_PATH.relative_to(REVIEW_PATH.parent.parent)} ({dups} possible duplicate(s))")
