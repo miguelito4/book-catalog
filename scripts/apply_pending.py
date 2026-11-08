@@ -76,6 +76,9 @@ def apply(pending: list[dict], decisions: dict, conn) -> dict:
             summary["linked"].append(f"{p['title']} -> #{row['id']}")
             continue
 
+        if not (d.get("title") or p["title"]).strip():
+            raise ReviewError(f"Empty title for Reading List entry {p['reading_list_id']}")
+
         if d["skip"]:
             conn.execute("INSERT OR REPLACE INTO sync_skips (reading_list_id, title) VALUES (?, ?)",
                          (p["reading_list_id"], p["title"]))
@@ -86,6 +89,8 @@ def apply(pending: list[dict], decisions: dict, conn) -> dict:
             raise ReviewError(f"No theme ticked for '{p['title']}'. Tick at least one, or Skip it.")
 
         values = {k: p.get(k) for k in BOOK_FIELDS}
+        values["title"] = d.get("title") or p["title"]          # reviewer edits win
+        values["author"] = d.get("author") or p.get("author")
         values.update(
             reading_status="read",
             year_read=int(p["date_read"][:4]),
@@ -98,7 +103,7 @@ def apply(pending: list[dict], decisions: dict, conn) -> dict:
         for slug in d["themes"]:
             conn.execute("INSERT OR IGNORE INTO book_themes (book_id, theme_id) VALUES (?, ?)",
                          (cur.lastrowid, theme_ids[slug]))
-        summary["added"].append(f"{p['title']} [{', '.join(d['themes'])}]")
+        summary["added"].append(f"{values['title']} ({values['author']}) [{', '.join(d['themes'])}]")
         if d["recommended"]:
             summary["recommended"].append(p["title"])
     return summary

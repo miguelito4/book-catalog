@@ -82,7 +82,8 @@ class SyncTests(unittest.TestCase):
             b["suggested_themes"] = ["fiction"] if b["reading_list_id"] == "NEW" else []
         md = sc.render_review(books, sc.themes(self.conn))
         d = sc.parse_review(md)
-        self.assertEqual(d["NEW"], {"themes": ["fiction"], "recommended": False, "skip": False, "link": None})
+        self.assertEqual(d["NEW"], {"themes": ["fiction"], "recommended": False, "skip": False, "link": None,
+                                    "title": "A Book Not In The Catalog Zzq", "author": "Some Writer"})
         self.assertEqual(d["DUP-TITLE"]["link"], self.existing["id"])
         # every theme in the vocabulary is offered for every book
         self.assertEqual(md.count("<!-- t:"), len(books) * len(sc.themes(self.conn)))
@@ -129,13 +130,15 @@ class SyncTests(unittest.TestCase):
 
     def test_apply_rejects_unknown_theme(self):
         books = [b for b in srl.candidates(self.rows, self.conn) if b["reading_list_id"] == "NEW"]
-        decisions = {"NEW": {"themes": ["not-a-theme"], "recommended": False, "skip": False, "link": None}}
+        decisions = {"NEW": {"themes": ["not-a-theme"], "recommended": False, "skip": False, "link": None,
+                             "title": None, "author": None}}
         with self.assertRaises(apply_pending.ReviewError):
             apply_pending.apply(books, decisions, self.conn)
 
     def test_apply_requires_a_theme_for_added_books(self):
         books = [b for b in srl.candidates(self.rows, self.conn) if b["reading_list_id"] == "NEW"]
-        decisions = {"NEW": {"themes": [], "recommended": True, "skip": False, "link": None}}
+        decisions = {"NEW": {"themes": [], "recommended": True, "skip": False, "link": None,
+                             "title": None, "author": None}}
         with self.assertRaisesRegex(apply_pending.ReviewError, "No theme ticked"):
             apply_pending.apply(books, decisions, self.conn)
         # ...but a skipped book needs none
@@ -168,9 +171,52 @@ class SyncTests(unittest.TestCase):
         for b in more:
             b["suggested_themes"] = ["poetry"]
         d = sc.parse_review(sc.render_review(more, vocab, prior))
-        self.assertEqual(d["NEW"], {"themes": ["history"], "recommended": True, "skip": False, "link": None})
+        self.assertEqual(d["NEW"]["themes"], ["history"])
+        self.assertTrue(d["NEW"]["recommended"])
         self.assertIsNone(d["DUP-TITLE"]["link"])
         self.assertEqual(d["LATER"]["themes"], ["poetry"])       # new book gets fresh suggestions
+
+    def test_reviewer_can_edit_title_and_author(self):
+        books = [b for b in srl.candidates(self.rows, self.conn) if b["reading_list_id"] == "NEW"]
+        for b in books:
+            b["possible_duplicate"], b["suggested_themes"] = None, ["fiction"]
+        md = sc.render_review(books, sc.themes(self.conn))
+        md = md.replace("Title: A Book Not In The Catalog Zzq", "Title: A Corrected Title Zzq")
+        md = md.replace("Author: Some Writer", "Author: Some K. Writer")
+        d = sc.parse_review(md)
+        with self.conn:
+            apply_pending.apply(books, d, self.conn)
+        row = self.conn.execute("SELECT title, author FROM books WHERE reading_list_id = 'NEW'").fetchone()
+        self.assertEqual(tuple(row), ("A Corrected Title Zzq", "Some K. Writer"))
+        # edits survive a re-sync
+        again = sc.parse_review(sc.render_review(books, sc.themes(self.conn), d))
+        self.assertEqual(again["NEW"]["title"], "A Corrected Title Zzq")
+
+    def test_cleaning_reading_list_metadata(self):
+        cases = {
+            "Szalay, David": "David Szalay",
+            "Kleist, Heinrich von": "Heinrich von Kleist",
+            "Joyce, Appleby\\,": "Joyce Appleby",                    # mangled credited name
+            "Katherine, Hayles\\, N.": "N. Katherine Hayles",
+            "manager), Hartnett\\, Kevin (Hubble science operations": "Kevin Hartnett",
+            "Ph.D., Dan Kindlon\\,; PhD, Michael Thompson\\,": "Dan Kindlon; Michael Thompson",
+            "Jr., Henry Louis Gates\\,": "Henry Louis Gates Jr.",
+            "Polybius\\,": "Polybius",
+        }
+        for raw, want in cases.items():
+            self.assertEqual(sc.clean_author(raw), want, raw)
+        titles = {
+            "All That Man Is A Novel": "All That Man Is",
+            "Apeirogon: A Novel": "Apeirogon",
+            "The relentless revolution: a history of capitalism":
+                "The Relentless Revolution: A History of Capitalism",
+            "Bacteria to AI: human futures with our nonhuman symbionts":
+                "Bacteria to AI: Human Futures with Our Nonhuman Symbionts",
+            "The Remains of the Day": "The Remains of the Day",
+            "A Novel Approach to Things": "A Novel Approach to Things",
+        }
+        for raw, want in titles.items():
+            self.assertEqual(sc.clean_title(raw), want, raw)
 
     def test_apply_requires_a_decision_for_every_book(self):
         books = srl.candidates(self.rows, self.conn)
