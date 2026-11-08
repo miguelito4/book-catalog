@@ -42,7 +42,7 @@ A personal book catalog system with automated enrichment and a static web interf
 cd book-catalog
 
 # Python dependencies
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
@@ -67,19 +67,19 @@ npm run db:load
 
 ```bash
 # Add by ISBN (metadata auto-fetched)
-python scripts/cli.py add --isbn 9780374529253
+python3 scripts/cli.py add --isbn 9780374529253
 
 # Add manually
-python scripts/cli.py add --title "2666" --author "Roberto Bolaño" --year 2004
+python3 scripts/cli.py add --title "2666" --author "Roberto Bolaño" --year 2004
 
 # Add with themes
-python scripts/cli.py add --isbn 9780374529253 --themes "fiction,latin-american-literature"
+python3 scripts/cli.py add --isbn 9780374529253 --themes "fiction,latin-american-literature"
 
 # Mark as recommended
-python scripts/cli.py add --isbn 9780374529253 --recommended
+python3 scripts/cli.py add --isbn 9780374529253 --recommended
 
 # Import from CSV
-python scripts/cli.py import --file reading-list.csv
+python3 scripts/cli.py import --file reading-list.csv
 ```
 
 ### Syncing from Reading List
@@ -88,12 +88,12 @@ New books come from a [Reading List](https://readinglist.app/) CSV export. Any b
 
 ```bash
 # Build a review batch from an export (default: newest inbox/*.csv)
-python scripts/sync_reading_list.py --csv "Reading List - 2026-11-08.csv"
+python3 scripts/sync_reading_list.py --csv "Reading List - 2026-11-08.csv"
 #   -> inbox/pending.json   enriched records (Open Library / Google Books)
 #   -> inbox/review.md      review form: every theme as a checkbox, suggestions pre-checked
 
 # Tick themes / ⭐ Recommended / Skip in review.md, then apply
-python scripts/apply_pending.py
+python3 scripts/apply_pending.py
 #   -> writes the database, refreshes catalog.json and books.sql, clears inbox/
 ```
 
@@ -102,39 +102,47 @@ python scripts/apply_pending.py
 - **Skips** are remembered in `sync_skips` and never offered again.
 - `date_read` is Reading List's *Finished Reading*; `date_added` is the day the batch was applied.
 
-In the automated flow (#1) the review form is the PR description and the merge applies it.
+### Automated flow (GitHub Actions)
+
+1. A Reading List export is pushed to `inbox/` → **Sync from Reading List** opens (or updates) a PR from `sync/reading-list` whose description is the review form. Re-syncs keep any ticks already made.
+2. Tick themes and ⭐ in the PR description. Every edit triggers a dry run: a red ✗ means merging would fail (e.g. a book with no theme).
+3. **Merge** → **Apply reviewed books** writes the batch, refreshes `books.sql` and `catalog.json`, pushes to `main`, and comments a summary on the PR. Netlify deploys.
+
+To drop a book, tick *Skip* and merge. Closing the PR without merging just means the same books come back next sync. If apply fails after a merge, edit the merged PR's description and re-run *Apply reviewed books* from the Actions tab with the PR number.
+
+Setup: repo secret `ANTHROPIC_API_KEY`; optional repo variable `CLAUDE_MODEL`; *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests*.
 
 ### Managing Themes
 
 ```bash
 # List themes
-python scripts/cli.py themes list
+python3 scripts/cli.py themes list
 
 # Add theme
-python scripts/cli.py themes add --name "Latin American Literature" --slug "latin-american-lit"
+python3 scripts/cli.py themes add --name "Latin American Literature" --slug "latin-american-lit"
 
 # Tag a book
-python scripts/cli.py tag --book-id 1 --theme "latin-american-lit"
+python3 scripts/cli.py tag --book-id 1 --theme "latin-american-lit"
 ```
 
 ### Enrichment
 
 ```bash
 # Enrich all books missing metadata
-python scripts/enrich.py
+python3 scripts/enrich.py
 
 # Enrich specific book
-python scripts/enrich.py --book-id 1
+python3 scripts/enrich.py --book-id 1
 
 # Force re-enrich (overwrite existing)
-python scripts/enrich.py --force
+python3 scripts/enrich.py --force
 ```
 
 ### Building the Site
 
 ```bash
 # Export database to JSON
-python scripts/export.py
+python3 scripts/export.py
 
 # Build static site
 npm run build

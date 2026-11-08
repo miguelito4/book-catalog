@@ -1,0 +1,70 @@
+name: Sync from Reading List
+
+# A new Reading List export lands in inbox/ (pushed by the iOS Shortcut)
+#   -> build a review batch -> open or update the review PR (branch sync/reading-list).
+# Ticks already made in an open review PR are carried over, never discarded.
+
+on:
+  push:
+    branches: [main]
+    paths: ["inbox/*.csv"]
+  workflow_dispatch:
+
+concurrency:
+  group: catalog
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Rebuild database from books.sql
+        run: python scripts/db_load.py
+
+      - name: Fetch open review PR (to keep existing ticks)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:sync/reading-list&state=open" \
+            --jq '.[0].body // empty' > "$RUNNER_TEMP/prior.md"
+          echo "Prior review form: $(wc -c < "$RUNNER_TEMP/prior.md") bytes"
+
+      - name: Build review batch
+        id: batch
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL || 'claude-haiku-5-5' }}
+        run: |
+          python scripts/sync_reading_list.py --preserve-from "$RUNNER_TEMP/prior.md"
+          if [ -f inbox/pending.json ]; then
+            echo "count=$(python -c 'import json; print(len(json.load(open("inbox/pending.json"))))')" >> "$GITHUB_OUTPUT"
+          else
+            echo "count=0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open or update review PR
+        if: steps.batch.outputs.count != '0'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: sync/reading-list
+          add-paths: |
+            inbox/pending.json
+            inbox/review.md
+          commit-message: "Reading List batch: ${{ steps.batch.outputs.count }} book(s) to review"
+          title: "📚 Review ${{ steps.batch.outputs.count }} book(s) from Reading List"
+          body-path: inbox/review.md
+          labels: reading-list
+          delete-branch: true

@@ -100,6 +100,8 @@ class SyncTests(unittest.TestCase):
                 current = line.split("rl:")[1].split()[0]
             if current == "NEW" and ("t:history" in line or "f:recommended" in line):
                 line = line.replace("[ ]", "[x]")
+            if current == "ONCUTOFF" and "t:fiction" in line:
+                line = line.replace("[ ]", "[x]")
             if current == "DUP-ISBN" and "f:link:" in line:
                 line = line.replace("[x]", "[ ]")
             if current == "DUP-ISBN" and "f:skip" in line:
@@ -130,6 +132,45 @@ class SyncTests(unittest.TestCase):
         decisions = {"NEW": {"themes": ["not-a-theme"], "recommended": False, "skip": False, "link": None}}
         with self.assertRaises(apply_pending.ReviewError):
             apply_pending.apply(books, decisions, self.conn)
+
+    def test_apply_requires_a_theme_for_added_books(self):
+        books = [b for b in srl.candidates(self.rows, self.conn) if b["reading_list_id"] == "NEW"]
+        decisions = {"NEW": {"themes": [], "recommended": True, "skip": False, "link": None}}
+        with self.assertRaisesRegex(apply_pending.ReviewError, "No theme ticked"):
+            apply_pending.apply(books, decisions, self.conn)
+        # ...but a skipped book needs none
+        decisions["NEW"]["skip"] = True
+        self.assertEqual(apply_pending.apply(books, decisions, self.conn)["skipped"], [books[0]["title"]])
+
+    def test_resync_preserves_review_ticks(self):
+        books = srl.candidates(self.rows, self.conn)
+        for b in books:
+            b["possible_duplicate"] = srl.find_duplicate(b, self.conn)
+            b["suggested_themes"] = ["fiction"]
+        vocab = sc.themes(self.conn)
+        first = sc.render_review(books, vocab)
+        # Reviewer swaps NEW to history + star and unlinks DUP-TITLE.
+        edited, current = [], None
+        for line in first.splitlines():
+            if "<!-- rl:" in line:
+                current = line.split("rl:")[1].split()[0]
+            if current == "NEW" and "t:fiction" in line:
+                line = line.replace("[x]", "[ ]")
+            if current == "NEW" and ("t:history" in line or "f:recommended" in line):
+                line = line.replace("[ ]", "[x]")
+            if current == "DUP-TITLE" and "f:link:" in line:
+                line = line.replace("[x]", "[ ]")
+            edited.append(line)
+        prior = sc.parse_review("\n".join(edited))
+        # A new export arrives with one more book; suggestions differ this time.
+        more = books + [dict(books[0], reading_list_id="LATER", title="Later Book Zzq",
+                             possible_duplicate=None)]
+        for b in more:
+            b["suggested_themes"] = ["poetry"]
+        d = sc.parse_review(sc.render_review(more, vocab, prior))
+        self.assertEqual(d["NEW"], {"themes": ["history"], "recommended": True, "skip": False, "link": None})
+        self.assertIsNone(d["DUP-TITLE"]["link"])
+        self.assertEqual(d["LATER"]["themes"], ["poetry"])       # new book gets fresh suggestions
 
     def test_apply_requires_a_decision_for_every_book(self):
         books = srl.candidates(self.rows, self.conn)

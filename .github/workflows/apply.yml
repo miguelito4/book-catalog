@@ -1,0 +1,102 @@
+name: Apply reviewed books
+
+# validate: on every edit of the review PR's description, dry-run the ticks
+#           (red ✗ = merging would fail, e.g. a book with no theme).
+# apply:    on merge, write the batch to the database, refresh books.sql and
+#           catalog.json, push to main -> Netlify deploys.
+# Recovery: if apply fails after a merge, fix the merged PR's description and
+#           re-run via "Run workflow" with that PR number.
+
+on:
+  pull_request:
+    types: [edited, reopened, closed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "Merged review PR number to apply"
+        required: true
+
+jobs:
+  validate:
+    if: github.event_name == 'pull_request' && github.event.action != 'closed' && github.head_ref == 'sync/reading-list'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/db_load.py
+      - name: Dry-run the review
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s' "$BODY" > "$RUNNER_TEMP/review.md"
+          python scripts/apply_pending.py --review "$RUNNER_TEMP/review.md" --dry-run
+
+  apply:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.action == 'closed' && github.event.pull_request.merged == true &&
+       github.head_ref == 'sync/reading-list')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: catalog
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR: ${{ github.event.pull_request.number || inputs.pr }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/db_load.py
+
+      - name: Get the review form (PR description at merge)
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            gh api "repos/${{ github.repository }}/pulls/$PR" --jq '.body' > "$RUNNER_TEMP/review.md"
+          else
+            printf '%s' "$BODY" > "$RUNNER_TEMP/review.md"
+          fi
+
+      - name: Apply
+        run: |
+          set -o pipefail
+          python scripts/apply_pending.py --review "$RUNNER_TEMP/review.md" | tee "$RUNNER_TEMP/summary.txt"
+
+      - name: Commit to main
+        run: |
+          git add -A data/books.sql site/_data/catalog.json inbox
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898341+github-actions[bot]@users.noreply.github.com"
+          git commit -F - <<MSG
+          Add books from Reading List (#$PR)
+
+          $(cat "$RUNNER_TEMP/summary.txt")
+          MSG
+          git push origin HEAD:main
+
+      - name: Report on the PR
+        if: always() && env.PR != ''
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            { echo "✅ Applied to the catalog. Netlify will deploy from \`main\`."; echo; echo '```'; cat "$RUNNER_TEMP/summary.txt"; echo '```'; } > "$RUNNER_TEMP/comment.md"
+          else
+            echo "❌ Apply failed, so nothing changed. Fix this PR's description, then re-run **Apply reviewed books** from the Actions tab with PR number $PR. [Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" > "$RUNNER_TEMP/comment.md"
+          fi
+          gh api "repos/${{ github.repository }}/issues/$PR/comments" -F body=@"$RUNNER_TEMP/comment.md" >/dev/null
