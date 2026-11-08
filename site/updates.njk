@@ -5,13 +5,13 @@ title: What's New
 
 <div class="page-header">
   <h1>What's New</h1>
-  <p class="page-intro">Recently added to the catalog.</p>
+  <p class="page-intro">Recent additions to the catalog, newest first, dated by when I finished them.</p>
 </div>
 
 <div class="updates-list">
-  {% for book in catalog.books | selectattr("date_added") | sort(attribute="date_added", reverse=true) %}
+  {% for book in catalog.books | updatesFeed %}
     <div class="update-item">
-      <span class="update-date">{{ book.date_added }}</span>
+      <span class="update-date">{{ book.update_date }}</span>
       <a href="/book/{{ book.id }}/">{{ book.title }}</a>
       <span class="update-author">by {{ book.author }}</span>
     </div>
