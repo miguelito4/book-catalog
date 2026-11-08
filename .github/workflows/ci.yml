@@ -1,0 +1,42 @@
+name: CI
+
+# Proves the committed data is self-consistent and the site builds:
+# books.sql -> books.db -> catalog.json (must match what's committed) -> Eleventy.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          npm ci
+
+      - name: Rebuild database from books.sql
+        run: python scripts/db_load.py
+
+      - name: Round-trip check (books.db -> books.sql)
+        run: python scripts/db_dump.py --check
+
+      - name: catalog.json matches database
+        run: python scripts/check_catalog.py
+
+      - name: Build site
+        run: npm run build

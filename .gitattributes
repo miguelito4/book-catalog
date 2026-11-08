@@ -1,0 +1,2 @@
+# Verbatim: summaries contain \r\n that must not be normalized
+data/books.sql -text diff

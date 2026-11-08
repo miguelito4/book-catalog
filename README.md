@@ -49,9 +49,17 @@ pip install -r requirements.txt
 # Node dependencies
 npm install
 
-# Initialize database
-python scripts/init_db.py
+# Build the local database from the committed dump
+npm run db:load
 ```
+
+## Data: `books.sql` is the source of truth
+
+`data/books.db` is gitignored. The database lives in git as a plain-text SQL dump, `data/books.sql` (one `INSERT` per row), so every catalog change is a readable diff and the repo doubles as the backup.
+
+- After cloning or pulling: `npm run db:load` (add `-- --force` to replace an existing `books.db`)
+- After changing the database (CLI add/edit/tag): `npm run export`, which writes `catalog.json` **and** refreshes `books.sql`. Commit both.
+- CI rebuilds the database from `books.sql`, checks the dump round-trips byte for byte, checks that `catalog.json` matches the database, and builds the site.
 
 ## Usage
 
@@ -153,7 +161,8 @@ Goodreads exports work with some column mapping (handled automatically).
 ```
 book-catalog/
 ├── data/
-│   ├── books.db              # SQLite database
+│   ├── books.sql             # Committed source of truth (text dump)
+│   ├── books.db              # Local SQLite build (gitignored)
 │   └── export/               # Backup exports
 ├── scripts/
 │   ├── cli.py                # Command-line interface
