@@ -49,6 +49,8 @@ module.exports = function(eleventyConfig) {
       cover_url: b.cover_url || null,
       themes: b.themes || [],
       date_read: b.date_read || null,
+      year_read: b.year_read || null,
+      date_added: b.date_added || null,
       is_recommended: b.is_recommended === true,
     }));
   });
