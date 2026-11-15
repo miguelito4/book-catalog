@@ -12,6 +12,7 @@ module.exports = function(eleventyConfig) {
   
   // Copy static assets
   eleventyConfig.addPassthroughCopy("site/css");
+  eleventyConfig.addPassthroughCopy("site/js");
   eleventyConfig.addPassthroughCopy("site/img");
   eleventyConfig.addPassthroughCopy("site/fonts");
   
@@ -28,6 +29,30 @@ module.exports = function(eleventyConfig) {
     });
   });
   
+  // Custom filter: "Aug 2026" from an ISO date. String-based on purpose: no
+  // Date object, so the build machine's time zone can't shift the month.
+  eleventyConfig.addFilter("readShort", (dateString) => {
+    if (!dateString) return "";
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const [year, month] = String(dateString).split("-");
+    return `${months[parseInt(month, 10) - 1] || ""} ${year}`.trim();
+  });
+
+  // Custom filter: the fields the catalog page needs, and no more (the full
+  // records carry summaries, which don't belong in the browse page's payload).
+  eleventyConfig.addFilter("catalogCards", (books) => {
+    return books.map((b) => ({
+      id: b.id,
+      title: b.title,
+      author: b.author || "",
+      translator: b.translator || null,
+      cover_url: b.cover_url || null,
+      themes: b.themes || [],
+      date_read: b.date_read || null,
+      is_recommended: b.is_recommended === true,
+    }));
+  });
+
   // Custom filter: format year
   eleventyConfig.addFilter("formatYear", (dateOrYear) => {
     if (!dateOrYear) return "";

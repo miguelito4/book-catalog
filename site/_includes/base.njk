@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% if title %}{{ title }} · {% endif %}Book Catalog</title>
-  <meta name="description" content="{% block description %}A personal catalog of books read and recommended.{% endblock %}">
+  <meta name="description" content="{{ description or 'A personal catalog of books read and recommended.' }}">
   
   <!-- Fonts: Newsreader for titles + prose (--font-work), Rosario for body/UI (--font-voice) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,22 +18,28 @@
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
   <header class="site-header">
     <div class="container">
-      <nav class="site-nav">
-        <a href="/">Browse</a>
-        <a href="/recommended/">Recommended</a>
-        <a href="/about/">About</a>
-        <a href="/updates/">What's New</a>
-        <span class="nav-sep" aria-hidden="true"></span>
-        <a href="https://caseyjr.org" class="nav-exit">
-          caseyjr.org<span class="exit-arrow" aria-hidden="true">&#8599;</span>
-        </a>
+      {# Strip nav, after caseyjr.org's: the belt goes home to the main site. #}
+      <nav class="strip" aria-label="Site navigation">
+        <div class="nav-left">
+          <a class="home" href="https://caseyjr.org" aria-label="caseyjr.org home">
+            <svg class="belt" viewBox="0 0 100 26" width="54" height="14" preserveAspectRatio="xMidYMid meet" role="presentation" aria-hidden="true" focusable="false"><defs><radialGradient id="belt-soft-grad"><stop class="belt-stop-core" offset="0%"></stop><stop class="belt-stop-mid" offset="40%"></stop><stop class="belt-stop-edge" offset="100%"></stop></radialGradient></defs><g class="belt-stars"><circle cx="22" cy="16" r="2.8" fill-opacity="0.608"></circle><circle cx="50" cy="13" r="3.6" fill-opacity="1.000"></circle><circle cx="78" cy="11" r="3.0" fill-opacity="0.955"></circle></g></svg>
+          </a>
+          <a href="/"{% if page.url == "/" or "/book/" in page.url %} class="here"{% endif %}>catalog</a>
+          <a href="/recommended/"{% if page.url == "/recommended/" %} class="here"{% endif %}>recommended</a>
+          <a href="/about/"{% if page.url == "/about/" %} class="here"{% endif %}>about</a>
+          <a href="/updates/"{% if page.url == "/updates/" %} class="here"{% endif %}>what's new</a>
+        </div>
+        <div class="nav-right">
+          <a class="nav-exit" href="https://caseyjr.org">caseyjr.org &rarr;</a>
+        </div>
       </nav>
     </div>
   </header>
-  
-  <main class="site-main">
+
+  <main class="site-main" id="main-content">
     <div class="container">
       {{ content | safe }}
     </div>

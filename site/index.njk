@@ -6,112 +6,175 @@ title: Browse
 <div class="page-header">
   <h1>A Life in Books</h1>
   <p class="page-intro">A running catalog of books that I've read and remember over the years.</p>
+  <p class="page-stats">{{ catalog.stats.total_books }} books · {{ catalog.stats.recommended_count }} recommended · {{ catalog.stats.themes_count }} themes</p>
 </div>
 
 {# Store book data in a script tag to avoid template escaping issues #}
 <script id="book-data" type="application/json">
-{{ catalog.books | dump | safe }}
+{{ catalog.books | catalogCards | dump | safe }}
 </script>
 
 <script id="theme-data" type="application/json">
 {{ catalog.themes | dump | safe }}
 </script>
 
-{# Alpine.js handles client-side filtering #}
-<div x-data="bookCatalog()" x-init="init()">
+{# Alpine.js handles client-side filtering, grouping and the view switch #}
+<div x-data="bookCatalog()" x-init="init()" x-cloak>
 
-  {# Search and filters #}
-  <div class="catalog-controls">
-    <div class="search-box">
-      <input 
-        type="search" 
-        x-model="searchQuery" 
-        placeholder="Search by title or author..."
-        class="search-input"
-      >
-    </div>
-    
-    <nav class="theme-filters">
-      <button 
-        @click="activeTheme = 'all'" 
-        :class="{ 'active': activeTheme === 'all' }"
-        class="theme-filter"
-      >
-        All
-      </button>
-      <template x-for="theme in themes" :key="theme.slug">
-        <button 
-          @click="activeTheme = theme.slug" 
-          :class="{ 'active': activeTheme === theme.slug }"
-          class="theme-filter"
+  <section class="catalog-controls" aria-label="Controls">
+    <div class="control-row">
+      <label class="control-label" for="catalog-search">Search</label>
+      <div class="control-options">
+        <input
+          id="catalog-search"
+          type="search"
+          x-model="searchQuery"
+          placeholder="Search by title or author..."
+          class="search-input"
         >
-          <span x-text="theme.name"></span> <span class="theme-count" x-text="'(' + theme.book_count + ')'"></span>
+        <button type="button" class="tab" :class="{ 'is-on': onlyRecommended }" :aria-pressed="onlyRecommended" @click="onlyRecommended = !onlyRecommended">
+          <span class="star" aria-hidden="true">★</span> recommended only
         </button>
-      </template>
-    </nav>
-  </div>
-  
-  {# Results count #}
-  <p class="results-count" x-text="filteredBooks.length + ' books'"></p>
-  
-  {# Book grid #}
-  <div class="book-grid">
-    <template x-for="book in filteredBooks" :key="book.id">
-      <article class="book-card" :class="{ 'book-card--recommended': book.is_recommended }">
-        <a :href="'/book/' + book.id + '/'" class="book-card__link">
-          <div class="book-card__cover">
-            <template x-if="book.cover_url">
-              <img :src="book.cover_url" alt="" loading="lazy">
-            </template>
-            <template x-if="!book.cover_url">
-              <div class="book-card__placeholder">
-                <span class="book-card__placeholder-title" x-text="book.title.substring(0, 40)"></span>
-              </div>
-            </template>
-            <template x-if="book.is_recommended">
-              <span class="book-card__badge" title="Recommended">★</span>
-            </template>
-          </div>
-          
-          <div class="book-card__info">
-            <h3 class="book-card__title" x-text="book.title"></h3>
-            <p class="book-card__author">
-              <span x-text="book.author || 'Unknown author'"></span>
-              <template x-if="book.translator">
-                <span class="book-card__translator" x-text="'(trans. ' + book.translator + ')'"></span>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <span class="control-label">Arrange</span>
+      <div class="control-options">
+        <template x-for="option in arrangements" :key="option.id">
+          <button type="button" class="tab" :class="{ 'is-on': arrange === option.id }" :aria-pressed="arrange === option.id" @click="setArrange(option.id)" x-text="option.label"></button>
+        </template>
+      </div>
+    </div>
+
+    <div class="control-row control-row--scroll">
+      <span class="control-label">Theme</span>
+      <div class="control-options">
+        <button type="button" class="tab" :class="{ 'is-on': activeTheme === 'all' }" :aria-pressed="activeTheme === 'all'" @click="activeTheme = 'all'">
+          All <span class="tab__count" x-text="books.length"></span>
+        </button>
+        <template x-for="theme in themes" :key="theme.slug">
+          <button type="button" class="tab" :class="{ 'is-on': activeTheme === theme.slug }" :aria-pressed="activeTheme === theme.slug" @click="activeTheme = theme.slug">
+            <span x-text="theme.name"></span> <span class="tab__count" x-text="theme.book_count"></span>
+          </button>
+        </template>
+      </div>
+    </div>
+
+    <div class="control-row control-row--letters" x-show="arrange === 'author'">
+      <span class="control-label">Letter</span>
+      <div class="control-options">
+        <button type="button" class="tab tab--letter" :class="{ 'is-on': letter === '' }" :aria-pressed="letter === ''" @click="letter = ''">all</button>
+        <template x-for="l in letters" :key="l">
+          <button type="button" class="tab tab--letter" :class="{ 'is-on': letter === l }" :aria-pressed="letter === l" @click="letter = l" x-text="l"></button>
+        </template>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <span class="control-label">View</span>
+      <div class="control-options">
+        <button type="button" class="tab" :class="{ 'is-on': view === 'covers' }" :aria-pressed="view === 'covers'" @click="setView('covers')">covers</button>
+        <button type="button" class="tab" :class="{ 'is-on': view === 'list' }" :aria-pressed="view === 'list'" @click="setView('list')">list</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="results-count" aria-live="polite" x-text="countLine"></p>
+
+  <template x-for="group in groups" :key="group.key">
+    <section class="book-group">
+      <div class="book-group__head">
+        <h2 x-text="group.label"></h2>
+        <span class="book-group__count" x-text="group.books.length + (group.books.length === 1 ? ' book' : ' books')"></span>
+      </div>
+      <div :class="view === 'list' ? 'book-list' : 'book-grid'">
+        {# Same markup as _includes/book-card.njk; keep the two in step. #}
+        <template x-for="book in group.books" :key="book.id">
+          <a class="book-card" :href="'/book/' + book.id + '/'">
+            <span class="book-card__cover">
+              <template x-if="book.cover_url">
+                <img :src="book.cover_url" alt="" loading="lazy">
               </template>
-            </p>
-            <template x-if="book.year_published">
-              <p class="book-card__year" x-text="book.year_published"></p>
-            </template>
-          </div>
-        </a>
-      </article>
-    </template>
-  </div>
-  
-  {# Empty state #}
+              <template x-if="!book.cover_url">
+                <span class="book-card__placeholder" x-text="book.title.substring(0, 40)"></span>
+              </template>
+            </span>
+            <span class="book-card__info">
+              <span class="book-card__title" x-text="book.title"></span>
+              <span class="book-card__author">
+                <template x-if="book.is_recommended"><span class="star" title="Recommended">★ </span></template><span x-text="book.author || 'Unknown author'"></span>
+                <template x-if="book.translator">
+                  <span class="book-card__translator" x-text="' (trans. ' + book.translator + ')'"></span>
+                </template>
+              </span>
+            </span>
+            <span class="book-card__themes" x-text="book.themeLabel"></span>
+            <span class="book-card__read" x-text="book.readLabel"></span>
+          </a>
+        </template>
+      </div>
+    </section>
+  </template>
+
   <div x-show="filteredBooks.length === 0" class="empty-state">
     <p>No books match your search.</p>
   </div>
-  
+
 </div>
+
+{% include "trail.njk" %}
 
 <script>
 function bookCatalog() {
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const store = {
+    get(key) { try { return localStorage.getItem(key); } catch (e) { return null; } },
+    set(key, value) { try { localStorage.setItem(key, value); } catch (e) { /* fine */ } },
+  };
+
   return {
     books: [],
     themes: [],
     activeTheme: 'all',
     searchQuery: '',
-    
+    onlyRecommended: false,
+    arrange: 'read',
+    view: 'covers',
+    letter: '',
+    letters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+    arrangements: [
+      { id: 'read', label: 'recently read' },
+      { id: 'author', label: 'author' },
+      { id: 'theme', label: 'theme' },
+    ],
+
     init() {
       // Load data from script tags
-      this.books = JSON.parse(document.getElementById('book-data').textContent);
       this.themes = JSON.parse(document.getElementById('theme-data').textContent);
 
       // Sort themes by book count (descending)
       this.themes.sort((a, b) => b.book_count - a.book_count);
+      const themeName = Object.fromEntries(this.themes.map(t => [t.slug, t.name]));
+      const themeRank = Object.fromEntries(this.themes.map((t, i) => [t.slug, i]));
+
+      this.books = JSON.parse(document.getElementById('book-data').textContent).map(b => {
+        // Sort key: last word of the first-listed author, accents folded.
+        const first = b.author.split(';')[0].trim();
+        const words = first.split(' ');
+        const sortKey = (words[words.length - 1] + ' ' + first).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+        const initial = sortKey.charAt(0).toUpperCase();
+        return Object.assign(b, {
+          sortKey,
+          letter: initial >= 'A' && initial <= 'Z' ? initial : '#',
+          haystack: (b.title + ' ' + b.author).toLowerCase(),
+          // A year only counts when there is a real finish date behind it.
+          yearRead: b.date_read ? Number(b.date_read.slice(0, 4)) : 0,
+          readLabel: b.date_read ? MONTHS[Number(b.date_read.slice(5, 7)) - 1] + ' ' + b.date_read.slice(0, 4) : '',
+          themeLabel: b.themes.map(s => themeName[s] || s).join(' · '),
+          themeRank: b.themes.length ? themeRank[b.themes[0]] : 99,
+        });
+      });
 
       // Check URL for theme filter
       const params = new URLSearchParams(window.location.search);
@@ -119,27 +182,76 @@ function bookCatalog() {
       if (themeParam) {
         this.activeTheme = themeParam;
       }
+
+      if (store.get('alib:view') === 'list') this.view = 'list';
+      const savedArrange = store.get('alib:arrange');
+      if (this.arrangements.some(a => a.id === savedArrange)) this.arrange = savedArrange;
     },
-    
+
+    setView(view) { this.view = view; store.set('alib:view', view); },
+    setArrange(arrange) { this.arrange = arrange; this.letter = ''; store.set('alib:arrange', arrange); },
+
     get filteredBooks() {
       let result = this.books;
-      
+
       // Filter by theme
       if (this.activeTheme !== 'all') {
-        result = result.filter(b => b.themes && b.themes.includes(this.activeTheme));
+        result = result.filter(b => b.themes.includes(this.activeTheme));
       }
-      
+
+      if (this.onlyRecommended) {
+        result = result.filter(b => b.is_recommended);
+      }
+
       // Filter by search
       if (this.searchQuery.trim()) {
-        const q = this.searchQuery.toLowerCase();
-        result = result.filter(b => 
-          (b.title && b.title.toLowerCase().includes(q)) ||
-          (b.author && b.author.toLowerCase().includes(q))
-        );
+        const q = this.searchQuery.toLowerCase().trim();
+        result = result.filter(b => b.haystack.includes(q));
       }
-      
+
+      if (this.arrange === 'author' && this.letter) {
+        result = result.filter(b => b.letter === this.letter);
+      }
+
       return result;
+    },
+
+    get countLine() {
+      const n = this.filteredBooks.length;
+      return n === this.books.length ? 'All ' + n + ' books' : n + ' of ' + this.books.length + ' books';
+    },
+
+    get groups() {
+      const byAuthor = (a, b) => (a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : a.title.localeCompare(b.title));
+      let key, label, compare;
+      if (this.arrange === 'author') {
+        key = b => b.letter;
+        label = k => k;
+        compare = byAuthor;
+      } else if (this.arrange === 'theme') {
+        const themes = this.themes;
+        key = b => b.themeRank;
+        label = k => (k === 99 ? 'Unfiled' : themes[k].name);
+        compare = (a, b) => (a.themeRank - b.themeRank) || byAuthor(a, b);
+      } else {
+        key = b => b.yearRead;
+        label = k => (k ? String(k) : 'Earlier, undated');
+        compare = (a, b) => (b.yearRead - a.yearRead) || (b.date_read || '').localeCompare(a.date_read || '') || byAuthor(a, b);
+      }
+
+      const groups = [];
+      let current = null;
+      for (const book of this.filteredBooks.slice().sort(compare)) {
+        const k = key(book);
+        if (!current || current.key !== k) {
+          current = { key: k, label: label(k), books: [] };
+          groups.push(current);
+        }
+        current.books.push(book);
+      }
+      return groups;
     }
   }
 }
 </script>
+<script defer src="/js/trail.js"></script>

@@ -219,15 +219,19 @@ book-catalog/
 │   └── models.py             # Shared database utilities
 ├── site/
 │   ├── _data/
-│   │   └── catalog.json      # Generated from export.py
+│   │   ├── catalog.json      # Generated from export.py
+│   │   └── trail.js          # Build-time "doors" for each book page
 │   ├── _includes/
 │   │   ├── base.njk          # Base template
 │   │   ├── book-card.njk     # Book card component
-│   │   └── header.njk        # Site header
+│   │   └── trail.njk         # Trail strip (books visited this session)
 │   ├── css/
 │   │   └── style.css         # Site styles
-│   ├── index.njk             # Homepage
-│   └── book.njk              # Individual book page template
+│   ├── js/
+│   │   └── trail.js          # Trail strip, Reshuffle and Leap
+│   ├── index.njk             # Catalog: cover grid / list, arrange, filter
+│   ├── book.njk              # Individual book page template
+│   └── trail-index.11ty.js   # /trail-index.json for Reshuffle and Leap
 ├── .eleventy.js              # Eleventy configuration
 ├── package.json              # Node dependencies
 ├── requirements.txt          # Python dependencies

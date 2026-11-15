@@ -1,0 +1,11 @@
+{#
+  Trail strip: the books visited this session, drawn by /js/trail.js from
+  sessionStorage. Hidden until there is something to show.
+#}
+<nav id="trail" class="trail" aria-label="Trail" hidden>
+  <div class="trail__head">
+    <h2 class="eyebrow">Trail <span class="trail__count" data-trail-count></span></h2>
+    <button type="button" class="text-button" data-trail-reset>Start over</button>
+  </div>
+  <ol class="trail__list" data-trail-list></ol>
+</nav>
