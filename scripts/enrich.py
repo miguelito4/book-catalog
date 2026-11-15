@@ -72,6 +72,32 @@ def fetch_openlibrary_by_title_author(title: str, author: str = None) -> Optiona
         return None
 
 
+def find_openlibrary_cover(title: str, author: str = None) -> Optional[str]:
+    """
+    Search OpenLibrary by title and author for any edition's cover.
+
+    The ISBN lookup returns one edition, and many edition records carry no
+    cover even when the work has one. This looks across the search results
+    and returns the first cover found. The subtitle is dropped from the query:
+    OpenLibrary titles rarely include it, so searching with it misses.
+    """
+    try:
+        params = {"title": title.split(":")[0].strip(), "limit": 5, "fields": "cover_i,title"}
+        if author:
+            params["author"] = author.split(";")[0].strip()
+
+        response = requests.get(OPENLIBRARY_SEARCH_API, params=params, timeout=10)
+        if response.status_code != 200:
+            return None
+        for doc in response.json().get("docs", []):
+            if doc.get("cover_i"):
+                return OPENLIBRARY_COVER_URL.format(cover_id=doc["cover_i"])
+        return None
+    except requests.RequestException as e:
+        print(f"  OpenLibrary cover search error: {e}")
+        return None
+
+
 def fetch_openlibrary_works(works_key: str) -> Optional[Dict[str, Any]]:
     """Fetch work details (for description) from OpenLibrary."""
     try:
@@ -215,6 +241,12 @@ def enrich_book(book: Book, force: bool = False, save: bool = True) -> bool:
             cover = extract_cover_url(ol_data, "openlibrary")
         if not cover and google_data:
             cover = extract_cover_url(google_data, "google")
+        # Last resort: the edition we matched has no cover; look for one on
+        # any edition of the work.
+        if not cover and book.title:
+            print(f"  Searching OpenLibrary for a cover...")
+            cover = find_openlibrary_cover(book.title, book.author)
+            time.sleep(REQUEST_DELAY)
         
         if cover:
             book.cover_url = cover

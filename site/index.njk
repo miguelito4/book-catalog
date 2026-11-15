@@ -128,6 +128,11 @@ title: Browse
 <script>
 function bookCatalog() {
   const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const readYear = (b) => {
+    if (b.date_read) return Number(b.date_read.slice(0, 4));
+    if (b.year_read && b.date_added && Number(b.date_added.slice(0, 4)) === b.year_read) return b.year_read;
+    return 0;
+  };
   const store = {
     get(key) { try { return localStorage.getItem(key); } catch (e) { return null; } },
     set(key, value) { try { localStorage.setItem(key, value); } catch (e) { /* fine */ } },
@@ -168,9 +173,14 @@ function bookCatalog() {
           sortKey,
           letter: initial >= 'A' && initial <= 'Z' ? initial : '#',
           haystack: (b.title + ' ' + b.author).toLowerCase(),
-          // A year only counts when there is a real finish date behind it.
-          yearRead: b.date_read ? Number(b.date_read.slice(0, 4)) : 0,
-          readLabel: b.date_read ? MONTHS[Number(b.date_read.slice(5, 7)) - 1] + ' ' + b.date_read.slice(0, 4) : '',
+          // The year a book was read: its finish date if there is one. A bare
+          // year_read counts only when the book was also logged that year
+          // (date_added); otherwise it is the CLI's default stamp on a
+          // back-catalog entry, not a reading date.
+          yearRead: readYear(b),
+          // Order within a year: finish date, else the day it was logged.
+          readSort: b.date_read || (readYear(b) ? b.date_added : '') || '',
+          readLabel: b.date_read ? MONTHS[Number(b.date_read.slice(5, 7)) - 1] + ' ' + b.date_read.slice(0, 4) : (readYear(b) ? String(readYear(b)) : ''),
           themeLabel: b.themes.map(s => themeName[s] || s).join(' · '),
           themeRank: b.themes.length ? themeRank[b.themes[0]] : 99,
         });
@@ -236,7 +246,7 @@ function bookCatalog() {
       } else {
         key = b => b.yearRead;
         label = k => (k ? String(k) : 'Earlier, undated');
-        compare = (a, b) => (b.yearRead - a.yearRead) || (b.date_read || '').localeCompare(a.date_read || '') || byAuthor(a, b);
+        compare = (a, b) => (b.yearRead - a.yearRead) || b.readSort.localeCompare(a.readSort) || byAuthor(a, b);
       }
 
       const groups = [];
