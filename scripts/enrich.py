@@ -9,6 +9,10 @@ Uses OpenLibrary (primary) and Google Books (fallback) to fetch:
 - Publisher info
 - Subject/category data
 
+Covers are looked for in order: the OpenLibrary edition matched by ISBN,
+Google Books, an OpenLibrary search across editions, then Bookshop.org by
+ISBN-13.
+
 Usage:
     python enrich.py              # Enrich all books missing metadata
     python enrich.py --book-id 1  # Enrich specific book
@@ -30,6 +34,12 @@ OPENLIBRARY_WORKS_API = "https://openlibrary.org{works_key}.json"
 OPENLIBRARY_COVER_URL = "https://covers.openlibrary.org/b/id/{cover_id}-L.jpg"
 
 GOOGLE_BOOKS_API = "https://www.googleapis.com/books/v1/volumes"
+
+# Bookshop.org's cover image service, keyed by ISBN-13. It answers 200 for any
+# ISBN: an unknown one gets a 200x300 placeholder image, not an error, so a
+# hit has to be judged by the image itself (see find_bookshop_cover).
+BOOKSHOP_COVER_URL = "https://images-us.bookshop.org/ingram/{isbn13}.jpg"
+BOOKSHOP_MIN_WIDTH = 300
 
 # Rate limiting
 REQUEST_DELAY = 1.0  # seconds between API calls
@@ -95,6 +105,53 @@ def find_openlibrary_cover(title: str, author: str = None) -> Optional[str]:
         return None
     except requests.RequestException as e:
         print(f"  OpenLibrary cover search error: {e}")
+        return None
+
+
+def image_size(data: bytes) -> Optional[tuple]:
+    """Width and height of a JPEG or PNG, read from its header. None if neither."""
+    if data[:8] == b"\x89PNG\r\n\x1a\n" and len(data) >= 24:
+        return int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
+    if data[:2] != b"\xff\xd8":
+        return None
+    i = 2
+    while i + 9 < len(data):
+        if data[i] != 0xFF:
+            return None
+        marker = data[i + 1]
+        if marker == 0xFF:  # fill byte before a marker
+            i += 1
+            continue
+        length = int.from_bytes(data[i + 2:i + 4], "big")
+        # Start-of-frame markers carry the dimensions (C4, C8 and CC are not SOFs).
+        if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+            return int.from_bytes(data[i + 7:i + 9], "big"), int.from_bytes(data[i + 5:i + 7], "big")
+        i += 2 + length
+    return None
+
+
+def find_bookshop_cover(isbn13: str) -> Optional[str]:
+    """
+    Cover from Bookshop.org's image service, by ISBN-13.
+
+    The service never says "not found": an ISBN it doesn't have gets a small
+    placeholder image with a 200 status. So the image is downloaded and
+    accepted only if it is a real picture at least BOOKSHOP_MIN_WIDTH wide.
+    """
+    digits = "".join(ch for ch in (isbn13 or "") if ch.isdigit())
+    if len(digits) != 13:
+        return None
+    url = BOOKSHOP_COVER_URL.format(isbn13=digits)
+    try:
+        response = requests.get(url, timeout=10)
+        if response.status_code != 200:
+            return None
+        size = image_size(response.content)
+        if not size or size[0] < BOOKSHOP_MIN_WIDTH:
+            return None
+        return url
+    except requests.RequestException as e:
+        print(f"  Bookshop cover error: {e}")
         return None
 
 
@@ -246,6 +303,11 @@ def enrich_book(book: Book, force: bool = False, save: bool = True) -> bool:
         if not cover and book.title:
             print(f"  Searching OpenLibrary for a cover...")
             cover = find_openlibrary_cover(book.title, book.author)
+            time.sleep(REQUEST_DELAY)
+        # Third backup: Bookshop.org, by ISBN-13.
+        if not cover and book.isbn13:
+            print(f"  Trying Bookshop.org for a cover...")
+            cover = find_bookshop_cover(book.isbn13)
             time.sleep(REQUEST_DELAY)
         
         if cover:
